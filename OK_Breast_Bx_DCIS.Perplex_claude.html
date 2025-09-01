@@ -1,0 +1,651 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>結構化病理報告產生器：乳房 DCIS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+        }
+        .form-select, .form-input, .form-textarea {
+            transition: all 0.3s ease-in-out;
+        }
+        .form-select:focus, .form-input:focus, .form-textarea:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+            outline: none;
+        }
+        .btn {
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn:hover {
+            cursor: pointer;
+        }
+        /* Custom scrollbar for the generated report */
+        #reportOutput::-webkit-scrollbar {
+            width: 8px;
+        }
+        #reportOutput::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        #reportOutput::-webkit-scrollbar-thumb {
+            background-color: #94a3b8;
+            border-radius: 4px;
+            border: 2px solid #f1f5f9;
+        }
+        #reportOutput::-webkit-scrollbar-thumb:hover {
+            background-color: #64748b;
+        }
+        
+        /* Firefox scrollbar styling */
+        #reportOutput {
+            scrollbar-width: thin;
+            scrollbar-color: #94a3b8 #f1f5f9;
+        }
+        
+        /* Loading animation */
+        .loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Success animation for copy button */
+        .success-animation {
+            animation: successPulse 0.3s ease-out;
+        }
+        
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Responsive improvements */
+        @media (max-width: 768px) {
+            .grid-cols-1 {
+                gap: 1rem;
+            }
+            .p-6 {
+                padding: 1rem;
+            }
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+            }
+            .no-print {
+                display: none !important;
+            }
+            #reportOutput {
+                border: 1px solid #000;
+                box-shadow: none;
+            }
+        }
+
+        /* Conditional visibility */
+        .conditional-field {
+            transition: all 0.3s ease-in-out;
+        }
+        .conditional-field.hidden {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-10">
+        
+        <header class="mb-8 text-center">
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-900">結構化病理報告產生器</h1>
+            <p class="text-slate-500 mt-2 text-sm md:text-base">乳房切片 - 導管原位癌 (DCIS)</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Input Form Section -->
+            <div class="space-y-6">
+                <div>
+                    <label for="microscopic_description" class="block text-sm font-medium text-slate-700 mb-2">顯微鏡描述</label>
+                    <textarea 
+                        id="microscopic_description" 
+                        rows="4" 
+                        class="form-textarea w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none resize-vertical"
+                        placeholder="請輸入顯微鏡觀察結果..."
+                    >Section shows fragmented tissue strips containing ductal carcinoma in situ arranged in solid nests with comedo necrosis.</textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="nuclear_grade" class="block text-sm font-medium text-slate-700 mb-2">核分級</label>
+                        <select id="nuclear_grade" class="form-select w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none">
+                            <option value="Grade 1">Grade 1 (低級)</option>
+                            <option value="Grade 2">Grade 2 (中級)</option>
+                            <option value="Grade 3">Grade 3 (高級)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="pattern" class="block text-sm font-medium text-slate-700 mb-2">型態</label>
+                        <select id="pattern" class="form-select w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none">
+                            <option value="Solid">Solid (實質型)</option>
+                            <option value="Comedo">Comedo (粉刺型)</option>
+                            <option value="Cribriform">Cribriform (篩狀型)</option>
+                            <option value="Papillary">Papillary (乳突型)</option>
+                            <option value="Micropapillary">Micropapillary (微乳突型)</option>
+                            <option value="Non-comedo">Non-comedo (非粉刺型)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="microcalcification" class="block text-sm font-medium text-slate-700 mb-2">微鈣化</label>
+                    <select id="microcalcification" class="form-select w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none">
+                        <option value="">請選擇...</option>
+                        <option value="Present">Present (存在)</option>
+                        <option value="Absent">Absent (不存在)</option>
+                    </select>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4">免疫組織化學檢查</h3>
+                    
+                    <!-- ER Section -->
+                    <div class="space-y-4 p-4 bg-slate-50 rounded-lg mb-6">
+                        <h4 class="text-md font-medium text-slate-700">ER (Leica, clone 6F11)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="er_status" class="block text-sm font-medium text-slate-700 mb-2">結果</label>
+                                <select id="er_status" class="form-select w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none">
+                                    <option value="">請選擇...</option>
+                                    <option value="Positive">Positive (陽性)</option>
+                                    <option value="Negative">Negative (陰性)</option>
+                                </select>
+                            </div>
+                            <div class="conditional-field" id="er_percentage_container">
+                                <label for="er_percentage" class="block text-sm font-medium text-slate-700 mb-2">陽性百分比 (%)</label>
+                                <input 
+                                    type="number" 
+                                    id="er_percentage" 
+                                    min="0" 
+                                    max="100" 
+                                    class="form-input w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none"
+                                    placeholder="0-100"
+                                >
+                            </div>
+                            <div class="conditional-field" id="er_intensity_container">
+                                <label for="er_intensity" class="block text-sm font-medium text-slate-700 mb-2">染色強度</label>
+                                <select id="er_intensity" class="form-select w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none">
+                                    <option value="">請選擇...</option>
+                                    <option value="strong nuclear stainings">Strong nuclear stainings (強)</option>
+                                    <option value="moderate nuclear stainings">Moderate nuclear stainings (中)</option>
+                                    <option value="weak nuclear stainings">Weak nuclear stainings (弱)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PR Section -->
+                    <div class="space-y-4 p-4 bg-slate-50 rounded-lg">
+                        <h4 class="text-md font-medium text-slate-700">PR (Novocastra Laboratories, clone 16)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="pr_status" class="block text-sm font-medium text-slate-700 mb-2">結果</label>
+                                <select id="pr_status" class="form-select w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none">
+                                    <option value="">請選擇...</option>
+                                    <option value="Positive">Positive (陽性)</option>
+                                    <option value="Negative">Negative (陰性)</option>
+                                </select>
+                            </div>
+                            <div class="conditional-field" id="pr_percentage_container">
+                                <label for="pr_percentage" class="block text-sm font-medium text-slate-700 mb-2">陽性百分比 (%)</label>
+                                <input 
+                                    type="number" 
+                                    id="pr_percentage" 
+                                    min="0" 
+                                    max="100" 
+                                    class="form-input w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none"
+                                    placeholder="0-100"
+                                >
+                            </div>
+                            <div class="conditional-field" id="pr_intensity_container">
+                                <label for="pr_intensity" class="block text-sm font-medium text-slate-700 mb-2">染色強度</label>
+                                <select id="pr_intensity" class="form-select w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none">
+                                    <option value="">請選擇...</option>
+                                    <option value="strong nuclear stainings">Strong nuclear stainings (強)</option>
+                                    <option value="moderate nuclear stainings">Moderate nuclear stainings (中)</option>
+                                    <option value="weak nuclear stainings">Weak nuclear stainings (弱)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="comment" class="block text-sm font-medium text-slate-700 mb-2">備註</label>
+                    <textarea 
+                        id="comment" 
+                        rows="4" 
+                        class="form-textarea w-full p-3 border border-slate-300 rounded-md shadow-sm focus:outline-none resize-vertical"
+                        placeholder="請輸入額外備註..."
+                    >The possibility of invasive carcinoma cannot be excluded in the limited specimen. The definitive diagnosis should be based on the excised specimen. Please correlate with the clinical condition.</textarea>
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div class="bg-slate-50 rounded-lg p-6 flex flex-col h-full min-h-[500px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-slate-900">產生的報告</h2>
+                    <div class="flex gap-2">
+                        <button id="printBtn" class="no-print btn bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium py-2 px-4 rounded-md flex items-center gap-2" title="列印報告">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6,9 6,2 18,2 18,9"></polyline>
+                                <path d="M6,18H4a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2H20a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H18"></path>
+                                <polyline points="6,14 18,14 18,22 6,22 6,14"></polyline>
+                            </svg>
+                            列印
+                        </button>
+                        <button id="copyBtn" class="no-print btn bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium py-2 px-4 rounded-md flex items-center gap-2" title="複製到剪貼簿">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            複製
+                        </button>
+                    </div>
+                </div>
+                <pre id="reportOutput" class="w-full h-full bg-white border border-slate-200 rounded-md p-4 text-sm whitespace-pre-wrap overflow-auto flex-grow font-mono leading-relaxed">報告將在此產生...</pre>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="no-print mt-8 pt-6 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="text-sm text-slate-500">
+                <span>自動儲存: </span>
+                <span id="autoSaveStatus" class="text-green-600">已啟用</span>
+            </div>
+            <div class="flex gap-4">
+                <button id="resetBtn" class="btn bg-slate-500 hover:bg-slate-600 text-white font-medium py-2 px-6 rounded-lg">重設</button>
+                <button id="generateBtn" class="btn bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg">產生報告</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Get references to all the interactive elements
+        const microscopicDescEl = document.getElementById('microscopic_description');
+        const nuclearGradeEl = document.getElementById('nuclear_grade');
+        const patternEl = document.getElementById('pattern');
+        const microcalcificationEl = document.getElementById('microcalcification');
+        
+        // ER elements
+        const erStatusEl = document.getElementById('er_status');
+        const erPercentageEl = document.getElementById('er_percentage');
+        const erIntensityEl = document.getElementById('er_intensity');
+        const erPercentageContainer = document.getElementById('er_percentage_container');
+        const erIntensityContainer = document.getElementById('er_intensity_container');
+        
+        // PR elements
+        const prStatusEl = document.getElementById('pr_status');
+        const prPercentageEl = document.getElementById('pr_percentage');
+        const prIntensityEl = document.getElementById('pr_intensity');
+        const prPercentageContainer = document.getElementById('pr_percentage_container');
+        const prIntensityContainer = document.getElementById('pr_intensity_container');
+        
+        const commentEl = document.getElementById('comment');
+        
+        const generateBtn = document.getElementById('generateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const printBtn = document.getElementById('printBtn');
+        const reportOutputEl = document.getElementById('reportOutput');
+        const autoSaveStatusEl = document.getElementById('autoSaveStatus');
+
+        // Function to toggle conditional fields visibility
+        function toggleConditionalFields() {
+            // ER fields
+            if (erStatusEl.value === 'Positive') {
+                erPercentageContainer.classList.remove('hidden');
+                erIntensityContainer.classList.remove('hidden');
+            } else {
+                erPercentageContainer.classList.add('hidden');
+                erIntensityContainer.classList.add('hidden');
+                erPercentageEl.value = '';
+                erIntensityEl.value = '';
+            }
+
+            // PR fields
+            if (prStatusEl.value === 'Positive') {
+                prPercentageContainer.classList.remove('hidden');
+                prIntensityContainer.classList.remove('hidden');
+            } else {
+                prPercentageContainer.classList.add('hidden');
+                prIntensityContainer.classList.add('hidden');
+                prPercentageEl.value = '';
+                prIntensityEl.value = '';
+            }
+        }
+
+        // Auto-save functionality
+        let autoSaveTimer;
+        function autoSave() {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                const formData = {
+                    microscopic_description: microscopicDescEl.value,
+                    nuclear_grade: nuclearGradeEl.value,
+                    pattern: patternEl.value,
+                    microcalcification: microcalcificationEl.value,
+                    er_status: erStatusEl.value,
+                    er_percentage: erPercentageEl.value,
+                    er_intensity: erIntensityEl.value,
+                    pr_status: prStatusEl.value,
+                    pr_percentage: prPercentageEl.value,
+                    pr_intensity: prIntensityEl.value,
+                    comment: commentEl.value
+                };
+                localStorage.setItem('dcis_report_data', JSON.stringify(formData));
+                autoSaveStatusEl.textContent = '已儲存 ' + new Date().toLocaleTimeString();
+                autoSaveStatusEl.className = 'text-green-600';
+            }, 1000);
+        }
+
+        // Load saved data
+        function loadSavedData() {
+            const savedData = localStorage.getItem('dcis_report_data');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    microscopicDescEl.value = data.microscopic_description || microscopicDescEl.value;
+                    nuclearGradeEl.value = data.nuclear_grade || nuclearGradeEl.value;
+                    patternEl.value = data.pattern || patternEl.value;
+                    microcalcificationEl.value = data.microcalcification || '';
+                    erStatusEl.value = data.er_status || '';
+                    erPercentageEl.value = data.er_percentage || '';
+                    erIntensityEl.value = data.er_intensity || '';
+                    prStatusEl.value = data.pr_status || '';
+                    prPercentageEl.value = data.pr_percentage || '';
+                    prIntensityEl.value = data.pr_intensity || '';
+                    commentEl.value = data.comment || commentEl.value;
+                    
+                    // Update conditional fields visibility
+                    toggleConditionalFields();
+                } catch (e) {
+                    console.warn('無法載入儲存的資料:', e);
+                }
+            }
+        }
+
+        // Add auto-save listeners
+        [microscopicDescEl, nuclearGradeEl, patternEl, microcalcificationEl, 
+         erStatusEl, erPercentageEl, erIntensityEl, 
+         prStatusEl, prPercentageEl, prIntensityEl, commentEl].forEach(el => {
+            el.addEventListener('input', autoSave);
+            el.addEventListener('change', autoSave);
+        });
+
+        // Add listeners for conditional field visibility
+        erStatusEl.addEventListener('change', toggleConditionalFields);
+        prStatusEl.addEventListener('change', toggleConditionalFields);
+
+        // Enhanced report generation function
+        function generateReport() {
+            generateBtn.classList.add('loading');
+            generateBtn.textContent = '產生中...';
+            
+            setTimeout(() => {
+                // Collect values from the form fields
+                const microscopicDesc = microscopicDescEl.value.trim();
+                const nuclearGrade = nuclearGradeEl.value;
+                const pattern = patternEl.value;
+                const microcalcification = microcalcificationEl.value;
+                
+                // ER data
+                const erStatus = erStatusEl.value;
+                const erPercentage = erPercentageEl.value;
+                const erIntensity = erIntensityEl.value;
+                
+                // PR data
+                const prStatus = prStatusEl.value;
+                const prPercentage = prPercentageEl.value;
+                const prIntensity = prIntensityEl.value;
+                
+                const comment = commentEl.value.trim();
+
+                // Build the report string matching the provided document structure
+                let report = `Breast biopsy\n\nDCIS\n\n`;
+                
+                if (microscopicDesc) {
+                    report += `${microscopicDesc}\n\n`;
+                }
+
+                report += `- Nuclear Grade: ${nuclearGrade}\n`;
+                report += `- Pattern: ${pattern}\n`;
+                if (microcalcification) {
+                    report += `- Microcalcification: ${microcalcification}\n`;
+                }
+                
+                report += `\nIMMUNOHISTOCHEMICAL STUDY:\n\n`;
+                
+                // ER reporting
+                if (erStatus) {
+                    report += `ER (Leica, clone 6F11): ${erStatus}`;
+                    if (erStatus === 'Positive') {
+                        const details = [];
+                        if (erPercentage) details.push(`${erPercentage}%`);
+                        if (erIntensity) details.push(erIntensity);
+                        if (details.length > 0) {
+                            report += ` (${details.join(', ')})`;
+                        }
+                    }
+                    report += `\n`;
+                }
+                
+                // PR reporting
+                if (prStatus) {
+                    report += `PR (Novocastra Laboratories, clone 16): ${prStatus}`;
+                    if (prStatus === 'Positive') {
+                        const details = [];
+                        if (prPercentage) details.push(`${prPercentage}%`);
+                        if (prIntensity) details.push(prIntensity);
+                        if (details.length > 0) {
+                            report += ` (${details.join(', ')})`;
+                        }
+                    }
+                    report += `\n`;
+                }
+
+                if (comment) {
+                    report += `\nComment:\n${comment}`;
+                }
+                
+                // Display the generated report
+                reportOutputEl.textContent = report;
+                
+                // Reset button state
+                generateBtn.classList.remove('loading');
+                generateBtn.textContent = '產生報告';
+                
+                // Reset copy button if it was in copied state
+                resetCopyButton();
+            }, 500);
+        }
+
+        // Enhanced copy function with better error handling
+        function copyReport() {
+            const reportText = reportOutputEl.textContent;
+            if (reportText && reportText !== '報告將在此產生...') {
+                // Try modern clipboard API first
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(reportText).then(() => {
+                        showCopySuccess();
+                    }).catch(err => {
+                        console.warn('Clipboard API failed, trying fallback:', err);
+                        fallbackCopy(reportText);
+                    });
+                } else {
+                    fallbackCopy(reportText);
+                }
+            } else {
+                alert('請先產生報告');
+            }
+        }
+
+        // Fallback copy method for older browsers
+        function fallbackCopy(text) {
+            try {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                if (successful) {
+                    showCopySuccess();
+                } else {
+                    throw new Error('Copy command failed');
+                }
+            } catch (err) {
+                console.error('All copy methods failed:', err);
+                alert('複製失敗，請手動選取並複製文字');
+            }
+        }
+
+        // Show copy success feedback
+        function showCopySuccess() {
+            copyBtn.classList.add('success-animation');
+            copyBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 6 9 17l-5-5"></path>
+                </svg>
+                已複製!
+            `;
+            copyBtn.classList.add('bg-green-200', 'text-green-700');
+            copyBtn.classList.remove('bg-slate-200', 'text-slate-700');
+            
+            setTimeout(resetCopyButton, 2000);
+        }
+
+        // Reset copy button to original state
+        function resetCopyButton() {
+            copyBtn.classList.remove('success-animation', 'bg-green-200', 'text-green-700');
+            copyBtn.classList.add('bg-slate-200', 'text-slate-700');
+            copyBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                複製
+            `;
+        }
+
+        // Print function
+        function printReport() {
+            const reportText = reportOutputEl.textContent;
+            if (reportText && reportText !== '報告將在此產生...') {
+                window.print();
+            } else {
+                alert('請先產生報告');
+            }
+        }
+
+        // Enhanced reset function with confirmation
+        function resetForm() {
+            if (confirm('確定要重設所有欄位嗎？這將清除所有已輸入的資料。')) {
+                // Reset to default values
+                microscopicDescEl.value = 'Section shows fragmented tissue strips containing ductal carcinoma in situ arranged in solid nests with comedo necrosis.';
+                nuclearGradeEl.value = 'Grade 1';
+                patternEl.value = 'Solid';
+                microcalcificationEl.value = '';
+                erStatusEl.value = '';
+                erPercentageEl.value = '';
+                erIntensityEl.value = '';
+                prStatusEl.value = '';
+                prPercentageEl.value = '';
+                prIntensityEl.value = '';
+                commentEl.value = 'The possibility of invasive carcinoma cannot be excluded in the limited specimen. The definitive diagnosis should be based on the excised specimen. Please correlate with the clinical condition.';
+                reportOutputEl.textContent = '報告將在此產生...';
+                resetCopyButton();
+                
+                // Update conditional fields visibility
+                toggleConditionalFields();
+                
+                // Clear saved data
+                localStorage.removeItem('dcis_report_data');
+                autoSaveStatusEl.textContent = '已清除';
+                autoSaveStatusEl.className = 'text-orange-600';
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+Enter or Cmd+Enter to generate report
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                generateReport();
+            }
+            // Ctrl+Shift+C or Cmd+Shift+C to copy
+            else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+                e.preventDefault();
+                copyReport();
+            }
+            // Ctrl+Shift+R or Cmd+Shift+R to reset
+            else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
+                e.preventDefault();
+                resetForm();
+            }
+        });
+
+        // Event Listeners
+        generateBtn.addEventListener('click', generateReport);
+        copyBtn.addEventListener('click', copyReport);
+        resetBtn.addEventListener('click', resetForm);
+        printBtn.addEventListener('click', printReport);
+
+        // Auto-generate report when form changes
+        [nuclearGradeEl, patternEl, microcalcificationEl, erStatusEl, erPercentageEl, erIntensityEl, prStatusEl, prPercentageEl, prIntensityEl].forEach(el => {
+            el.addEventListener('change', () => {
+                setTimeout(generateReport, 100);
+            });
+        });
+
+        // Initialize the application
+        window.addEventListener('load', () => {
+            loadSavedData();
+            toggleConditionalFields();
+            generateReport();
+            
+            // Set initial auto-save status
+            autoSaveStatusEl.textContent = '已啟用';
+            autoSaveStatusEl.className = 'text-green-600';
+        });
+
+        // Handle page unload
+        window.addEventListener('beforeunload', () => {
+            autoSave();
+        });
+    </script>
+</body>
+</html>

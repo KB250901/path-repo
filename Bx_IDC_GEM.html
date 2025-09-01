@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Structured Pathology Report Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .form-select, .form-input, .form-textarea {
+            border-radius: 0.375rem;
+            border-color: #d1d5db;
+            transition: all 0.15s ease-in-out;
+        }
+        .form-select:focus, .form-input:focus, .form-textarea:focus {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            border-color: #6366f1;
+            outline: none;
+        }
+        .report-output {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .copy-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .copy-button:hover {
+            transform: translateY(-1px);
+        }
+        .copy-button.copied {
+            background-color: #22c55e;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 lg:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Structured Pathology Report Generator</h1>
+            <p class="text-gray-600 mt-1">Based on IDC Grade & IHC Profile</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-700 border-b pb-3 mb-6">Input Data</h2>
+                
+                <form id="pathology-form">
+                    <div class="mb-6">
+                        <label for="micro-desc" class="block text-sm font-medium text-gray-700 mb-2">MICROSCOPIC DESCRIPTION</label>
+                        <textarea id="micro-desc" rows="5" class="form-textarea w-full p-2 border">The tissue strips show infiltration of hyperchromatic tumor cells arranged as irregularly anastomosing nests and cords with surrounding stromal desmoplastic changes. Immunohistochemically, p63 and SMMHC stains show loss of the myoepithelial cell layers in the tumor cells.</textarea>
+                    </div>
+
+                    <div class="mb-6">
+                        <h3 class="text-md font-semibold text-gray-700 mb-4">Histologic grade (Nottingham histologic score)</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="tubule-formation" class="block text-sm font-medium text-gray-600">Tubule formation</label>
+                                <select id="tubule-formation" class="form-select w-full mt-1 p-2 border">
+                                    <option value="1">> 75% (score = 1)</option>
+                                    <option value="2" selected>10% to 75% (score = 2)</option>
+                                    <option value="3">< 10% (score = 3)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="nuclear-pleomorphism" class="block text-sm font-medium text-gray-600">Nuclear pleomorphism</label>
+                                <select id="nuclear-pleomorphism" class="form-select w-full mt-1 p-2 border">
+                                    <option value="1">Small, regular, uniform cells (score = 1)</option>
+                                    <option value="2" selected>Moderate increase in size, etc (score = 2)</option>
+                                    <option value="3">Marked variation (score = 3)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="mitotic-count" class="block text-sm font-medium text-gray-600">Mitotic count</label>
+                                <select id="mitotic-count" class="form-select w-full mt-1 p-2 border">
+                                    <option value="1">0-3 mitoses per mm2 (score = 1)</option>
+                                    <option value="2" selected>4-7 mitoses per mm2 (score = 2)</option>
+                                    <option value="3">>7 mitoses per mm2 (score = 3)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-md font-semibold text-gray-700 mb-4">IMMUNOHISTOCHEMICAL STUDY</h3>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                                <label class="text-sm font-medium text-gray-600">ER (Leica, clone 6F11)</label>
+                                <select id="er-status" class="form-select sm:col-span-2 p-2 border">
+                                    <option value="Positive" selected>Positive</option>
+                                    <option value="Negative">Negative</option>
+                                </select>
+                                <div id="er-details" class="sm:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <input type="number" id="er-percent" placeholder="%" min="0" max="100" class="form-input w-full p-2 border" value="80">
+                                    <select id="er-intensity" class="form-select w-full p-2 border">
+                                        <option value="weak" selected>weak nuclear stainings</option>
+                                        <option value="moderate">moderate nuclear stainings</option>
+                                        <option value="strong">strong nuclear stainings</option>
+                                    </select>
+                                </div>
+                            </div>
+                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                                <label class="text-sm font-medium text-gray-600">PR (Novocastra, clone 16)</label>
+                                <select id="pr-status" class="form-select sm:col-span-2 p-2 border">
+                                    <option value="Positive" selected>Positive</option>
+                                    <option value="Negative">Negative</option>
+                                </select>
+                                <div id="pr-details" class="sm:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <input type="number" id="pr-percent" placeholder="%" min="0" max="100" class="form-input w-full p-2 border" value="5">
+                                    <select id="pr-intensity" class="form-select w-full p-2 border">
+                                        <option value="weak" selected>weak nuclear stainings</option>
+                                        <option value="moderate">moderate nuclear stainings</option>
+                                        <option value="strong">strong nuclear stainings</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                                <label for="her2-status" class="text-sm font-medium text-gray-600">HER-2/Neu (Zytomed, clone SP3)</label>
+                                <select id="her2-status" class="form-select sm:col-span-2 p-2 border">
+                                    <option value="Negative (score 0)" selected>Negative (score 0)</option>
+                                    <option value="Negative (score 1+)">Negative (score 1+)</option>
+                                    <option value="Equivocal (score 2+)">Equivocal (score 2+)</option>
+                                    <option value="Positive (score 3+)">Positive (score 3+)</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                                <label for="ki67-index" class="text-sm font-medium text-gray-600">Ki-67 index</label>
+                                <input type="number" id="ki67-index" placeholder="%" min="0" max="100" class="form-input sm:col-span-2 w-full p-2 border" value="20">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <div class="flex justify-between items-center border-b pb-3 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-700">Generated Report</h2>
+                    <button id="copy-button" class="copy-button bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Copy
+                    </button>
+                </div>
+                <div id="report-output" class="report-output p-4 rounded-md min-h-[400px]"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get all interactive elements
+            const formElements = document.querySelectorAll('#pathology-form select, #pathology-form input, #pathology-form textarea');
+            const microDescEl = document.getElementById('micro-desc');
+            const tubuleEl = document.getElementById('tubule-formation');
+            const nuclearEl = document.getElementById('nuclear-pleomorphism');
+            const mitoticEl = document.getElementById('mitotic-count');
+            const erStatusEl = document.getElementById('er-status');
+            const erDetailsEl = document.getElementById('er-details');
+            const erPercentEl = document.getElementById('er-percent');
+            const erIntensityEl = document.getElementById('er-intensity');
+            const prStatusEl = document.getElementById('pr-status');
+            const prDetailsEl = document.getElementById('pr-details');
+            const prPercentEl = document.getElementById('pr-percent');
+            const prIntensityEl = document.getElementById('pr-intensity');
+            const her2El = document.getElementById('her2-status');
+            const ki67El = document.getElementById('ki67-index');
+            const reportOutputEl = document.getElementById('report-output');
+            const copyButton = document.getElementById('copy-button');
+
+            // Function to get the text of the selected option
+            const getSelectedText = (element) => element.options[element.selectedIndex].text;
+
+            // Function to calculate score and determine grade
+            const getHistologicGrade = () => {
+                const tubuleScore = parseInt(tubuleEl.value);
+                const nuclearScore = parseInt(nuclearEl.value);
+                const mitoticScore = parseInt(mitoticEl.value);
+                const totalScore = tubuleScore + nuclearScore + mitoticScore;
+
+                let grade = '';
+                let scoreRange = '';
+                if (totalScore <= 5) {
+                    grade = 'Grade I';
+                    scoreRange = '3,4,5';
+                } else if (totalScore <= 7) {
+                    grade = 'Grade II';
+                    scoreRange = '6,7';
+                } else {
+                    grade = 'Grade III';
+                    scoreRange = '8,9';
+                }
+
+                return {
+                    tubuleScore,
+                    nuclearScore,
+                    mitoticScore,
+                    totalScore,
+                    grade,
+                    scoreRange
+                };
+            };
+            
+            // Function to update the final report
+            const updateReport = () => {
+                const gradeInfo = getHistologicGrade();
+                
+                // Build Histologic Grade section
+                const tubuleText = getSelectedText(tubuleEl).split('(score')[0].trim();
+                const nuclearText = getSelectedText(nuclearEl).split('(score')[0].trim();
+                const mitoticText = getSelectedText(mitoticEl).split('(score')[0].trim();
+
+                let histologicGradeReport = `Histologic grade (Nottingham histologic score): ${gradeInfo.grade} (score ${gradeInfo.scoreRange})\n`;
+                histologicGradeReport += `- Tubule formation: ${tubuleText} (score = ${gradeInfo.tubuleScore})\n`;
+                histologicGradeReport += `- Nuclear pleomorphism: ${nuclearText} (score = ${gradeInfo.nuclearScore})\n`;
+                histologicGradeReport += `- Mitotic count: ${mitoticText} (score = ${gradeInfo.mitoticScore})`;
+                
+                // Build IMMUNOHISTOCHEMICAL STUDY section
+                let ihcReport = 'IMMUNOHISTOCHEMICAL STUDY:\n';
+
+                // ER
+                const erStatus = erStatusEl.value;
+                let erLine = `1. ER (Leica, clone 6F11): ${erStatus}`;
+                if (erStatus === 'Positive') {
+                    erLine += ` (${erPercentEl.value || ' '}% ${getSelectedText(erIntensityEl)})`;
+                }
+                ihcReport += erLine + '\n';
+                
+                // PR
+                const prStatus = prStatusEl.value;
+                let prLine = `2. PR (Novocastra Laboratories, clone 16): ${prStatus}`;
+                if (prStatus === 'Positive') {
+                     prLine += ` (${prPercentEl.value || ' '}% ${getSelectedText(prIntensityEl)})`;
+                }
+                ihcReport += prLine + '\n';
+
+                // HER-2/Neu
+                ihcReport += `3. HER-2/Neu (Zytomed, clone SP3): ${getSelectedText(her2El)}\n`;
+
+                // Ki-67
+                ihcReport += `4. Ki-67 index: ${ki67El.value || ' '}%`;
+
+                // Combine all parts
+                reportOutputEl.textContent = 
+`MICROSCOPIC DESCRIPTION:
+${microDescEl.value}
+${histologicGradeReport}
+
+${ihcReport}`;
+            };
+
+            // Function to handle showing/hiding details for ER/PR
+            const toggleDetails = (statusEl, detailsEl) => {
+                if (statusEl.value === 'Positive') {
+                    detailsEl.style.display = 'grid';
+                } else {
+                    detailsEl.style.display = 'none';
+                }
+            };
+            
+            // Add event listeners
+            formElements.forEach(el => {
+                el.addEventListener('input', updateReport);
+                el.addEventListener('change', updateReport);
+            });
+
+            erStatusEl.addEventListener('change', () => toggleDetails(erStatusEl, erDetailsEl));
+            prStatusEl.addEventListener('change', () => toggleDetails(prStatusEl, prDetailsEl));
+
+            // Copy to clipboard functionality
+            copyButton.addEventListener('click', () => {
+                // A temporary textarea is created to hold the text to be copied.
+                // This is a common and reliable method for copying text to the clipboard.
+                const textarea = document.createElement('textarea');
+                textarea.value = reportOutputEl.textContent;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    copyButton.textContent = 'Copied!';
+                    copyButton.classList.add('copied');
+                    setTimeout(() => {
+                        copyButton.textContent = 'Copy';
+                        copyButton.classList.remove('copied');
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                    copyButton.textContent = 'Error';
+                }
+                document.body.removeChild(textarea);
+            });
+
+            // Initial setup
+            toggleDetails(erStatusEl, erDetailsEl);
+            toggleDetails(prStatusEl, prDetailsEl);
+            updateReport(); // Generate report on initial load
+        });
+    </script>
+</body>
+</html>

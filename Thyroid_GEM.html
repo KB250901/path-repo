@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thyroid Pathology Report Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 950px;
+            margin: auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px F10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #005a9c;
+            border-bottom: 2px solid #005a9c;
+            padding-bottom: 10px;
+        }
+        h1 {
+            font-size: 1.8em;
+            text-align: center;
+        }
+        h2 {
+            font-size: 1.4em;
+            margin-top: 30px;
+        }
+        fieldset {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #fafafa;
+        }
+        legend {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #333;
+            padding: 0 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 5px 0;
+        }
+        .form-group > label {
+            flex-basis: 250px;
+            font-weight: bold;
+            padding-right: 15px;
+        }
+        .form-group .options {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="text"], input[type="number"], select, textarea {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            width: 100%;
+            resize: vertical;
+            min-height: 100px;
+        }
+        .short-input {
+            width: 80px;
+        }
+        .hidden {
+            display: none;
+        }
+        .button-container {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin: 0 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #reportOutput {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            width: 100%;
+        }
+        .specimen-block {
+            border: 1px dashed #bbb;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Thyroid Pathology Report Generator</h1>
+
+    <form id="reportForm">
+        <h2>Diagnosis Input</h2>
+        <fieldset>
+            <legend>Diagnosis Line</legend>
+            <div class="form-group">
+                <label>Tumor Type:</label>
+                <div class="options">
+                    <input type="text" id="diag_tumor_type" value="Papillary carcinoma" style="width: 200px;">
+                    (T<input type="text" id="diag_t_stage" class="short-input" placeholder="e.g., 2">)
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Metastasis Status:</label>
+                <div class="options">
+                    <select id="diag_meta_status">
+                        <option value="with">with</option>
+                        <option value="without">without</option>
+                    </select>
+                    regional lymph nodes metastasis
+                    (<input type="number" id="diag_pos_nodes" class="short-input" placeholder="pos">
+                    / <input type="number" id="diag_total_nodes" class="short-input" placeholder="total"> N),
+                </div>
+            </div>
+            <div class="form-group">
+                 <label>Laterality & Procedure:</label>
+                 <div class="options">
+                    <select id="diag_laterality">
+                        <option value="right">right</option>
+                        <option value="left">left</option>
+                        <option value="bilateral">bilateral</option>
+                    </select>
+                    thyroid,
+                    <input type="text" id="diag_procedure" value="radical total thyroidectomy" style="width: 250px;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Second Diagnosis Line:</label>
+                <div class="options">
+                    <input type="text" id="diag_line2" placeholder="(e.g., Follicular nodular disease)" style="width: 400px;">
+                </div>
+            </div>
+        </fieldset>
+
+        <h2>Gross Description Input</h2>
+        <fieldset>
+            <legend>Specimen Details</legend>
+            <div class="form-group">
+                <label for="numSpecimens">Number of Specimens:</label>
+                <select id="numSpecimens" onchange="toggleSpecimenBlocks()">
+                    <option value="1">One</option>
+                    <option value="2">Two</option>
+                </select>
+            </div>
+
+            <div id="specimen1_block" class="specimen-block">
+                <h4>#1 Specimen Details</h4>
+                <div class="form-group"><label>Laterality:</label> <input type="text" id="gross1_laterality" placeholder="e.g., Right thyroid"></div>
+                <div class="form-group"><label>Specimen Size (cm) & Weight (gm):</label> <input type="text" id="gross1_size" class="short-input"> cm and <input type="text" id="gross1_weight" class="short-input"> gm</div>
+                <div class="form-group"><label>Dominant Nodule Size (cm):</label> <input type="text" id="gross1_tumor_size" class="short-input"> cm</div>
+            </div>
+
+            <div id="specimen2_block" class="specimen-block hidden">
+                <h4>#2 Specimen Details</h4>
+                <div class="form-group"><label>Laterality:</label> <input type="text" id="gross2_laterality" placeholder="e.g., Left thyroid"></div>
+                <div class="form-group"><label>Specimen Size (cm) & Weight (gm):</label> <input type="text" id="gross2_size" class="short-input"> cm and <input type="text" id="gross2_weight" class="short-input"> gm</div>
+                <div class="form-group"><label>Dominant Nodule Size (cm):</label> <input type="text" id="gross2_tumor_size" class="short-input"> cm</div>
+            </div>
+        </fieldset>
+        
+        <h2>Microscopic Description Input</h2>
+        <fieldset>
+            <legend>Microscopic Findings</legend>
+            <div class="form-group"><label>1. Tumor histologic type:</label> <select id="micro_hist_type"><option>Papillary carcinoma, classic type</option><option>Papillary carcinoma, follicular variant</option><option>Follicular carcinoma</option><option>Medullary carcinoma</option><option>Anaplastic carcinoma</option><option>Other</option></select></div>
+            <div class="form-group"><label>2. Tumor size:</label> <input type="text" id="micro_size1" style="width:100px"> x <input type="text" id="micro_size2" style="width:100px"> cm</div>
+            <div class="form-group"><label>3. Encapsulation:</label> <select id="micro_encap"><option>Present</option><option>Absent</option><option>Not identified</option></select></div>
+            <div class="form-group"><label>4. Capsular invasion:</label> <select id="micro_cap_inv"><option>Absent</option><option>Present</option><option>Cannot be determined</option></select></div>
+            <div class="form-group"><label>5. Lymph-vascular invasion:</label> <select id="micro_lvi"><option>Absent</option><option>Present</option><option>Cannot be determined</option></select></div>
+            <div class="form-group"><label>6. Extrathyroid extension:</label> <select id="micro_ete"><option>Absent</option><option>Present</option><option>Cannot be determined</option></select></div>
+            <div class="form-group"><label>7. Surgical margin involvement:</label> <select id="micro_margin"><option>Uninvolved</option><option>Involved</option></select></div>
+            <div class="form-group"><label>8. Multicentricity:</label> <select id="micro_multi"><option>Absent</option><option>Present</option></select></div>
+            <div class="form-group"><label>9. Other pathologic finding:</label> <select id="micro_other"><option>Nil</option><option>Follicular nodular disease</option><option>Lymphocytic thyroiditis</option></select></div>
+            <div class="form-group"><label>10. Parathyroid gland:</label> <select id="micro_para"><option>Not identified</option><option>Identified, unremarkable</option><option>Hyperplasia</option></select></div>
+            
+            <div class="form-group"><label>11. Lymph nodes:</label></div>
+            <div style="padding-left: 30px;">
+                <div class="form-group"><label>- Level VI:</label> <input type="number" id="ln_vi_pos" class="short-input">/<input type="number" id="ln_vi_total" class="short-input"> (pos/total); largest meta size: <input type="number" id="ln_vi_size" class="short-input"> mm</div>
+                <div class="form-group"><label>- Level II, III, IV:</label> <input type="number" id="ln_iitoiv_pos" class="short-input">/<input type="number" id="ln_iitoiv_total" class="short-input"> (pos/total)</div>
+                <div class="form-group"><label>- Others (specify):</label> <input type="text" id="ln_other_spec" style="width:150px"> : <input type="number" id="ln_other_pos" class="short-input">/<input type="number" id="ln_other_total" class="short-input"> (pos/total)</div>
+                <div class="form-group"><label>- Largest size of cancer in node:</label> <input type="number" id="ln_largest_size" class="short-input"> mm</div>
+            </div>
+
+            <div class="form-group"><label>12. Comments:</label> <textarea id="micro_comments" rows="2">Nil</textarea></div>
+        </fieldset>
+    </form>
+
+    <div class="button-container">
+        <button type="button" onclick="generateReport()">Generate Report</button>
+        <button type="button" onclick="copyReport()" id="copyButton">Copy Report</button>
+    </div>
+
+    <h2>Generated Report</h2>
+    <textarea id="reportOutput" rows="25" readonly></textarea>
+</div>
+
+<script>
+    function toggleSpecimenBlocks() {
+        const num = document.getElementById('numSpecimens').value;
+        document.getElementById('specimen1_block').classList.remove('hidden');
+        if (num === '2') {
+            document.getElementById('specimen2_block').classList.remove('hidden');
+        } else {
+            document.getElementById('specimen2_block').classList.add('hidden');
+        }
+    }
+
+    function generateReport() {
+        let report = "";
+
+        // --- DIAGNOSIS ---
+        const diag_tumor_type = document.getElementById('diag_tumor_type').value || "Papillary carcinoma";
+        const diag_t_stage = document.getElementById('diag_t_stage').value || " ";
+        const diag_meta_status = document.getElementById('diag_meta_status').value;
+        const diag_pos_nodes = document.getElementById('diag_pos_nodes').value || " ";
+        const diag_total_nodes = document.getElementById('diag_total_nodes').value || " ";
+        const diag_laterality = document.getElementById('diag_laterality').value;
+        const diag_procedure = document.getElementById('diag_procedure').value;
+        const diag_line2 = document.getElementById('diag_line2').value;
+
+        report += "DIAGNOSIS:\n";
+        report += `1. ${diag_tumor_type} (T${diag_t_stage}) ${diag_meta_status} regional lymph nodes metastasis\n`;
+        report += `(${diag_pos_nodes}/${diag_total_nodes} N), ${diag_laterality} thyroid, ${diag_procedure}\n`;
+        if (diag_line2) {
+            report += `2. ${diag_line2}, ${diag_laterality} thyroid\n`;
+        }
+
+        // --- GROSS DESCRIPTION ---
+        report += "\nGROSS DESCRIPTION:\n";
+        const numSpecimens = document.getElementById('numSpecimens').value;
+        report += `Specimens are submitted in ${numSpecimens === '1' ? 'one' : 'two'} separate container${numSpecimens === '1' ? '' : 's'}.\n`;
+
+        // Specimen 1
+        const gross1_laterality = document.getElementById('gross1_laterality').value || "==";
+        const gross1_size = document.getElementById('gross1_size').value || "按一下這裡以輸入文字。";
+        const gross1_weight = document.getElementById('gross1_weight').value || "按一下這裡以輸入文字。";
+        const gross1_tumor_size = document.getElementById('gross1_tumor_size').value || "==";
+
+        report += `#1 [Thyroid, ${gross1_laterality}]\n`;
+        report += `- Specimen size: ${gross1_size} cm and ${gross1_weight} gm\n`;
+        report += `- Tumor: Multiple nodules with heterogenous brownish cut-surfaces are seen.\n`;
+        report += `- Tumor size: Dominant nodule is up to ${gross1_tumor_size} cm in size.\n`;
+
+        // Specimen 2
+        if (numSpecimens === '2') {
+            const gross2_laterality = document.getElementById('gross2_laterality').value || "==";
+            const gross2_size = document.getElementById('gross2_size').value || "按一下這裡以輸入文字。";
+            const gross2_weight = document.getElementById('gross2_weight').value || "按一下這裡以輸入文字。";
+            const gross2_tumor_size = document.getElementById('gross2_tumor_size').value || "==";
+            
+            report += `#2 [Thyroid, ${gross2_laterality}]\n`;
+            report += `- Specimen size: ${gross2_size} cm and ${gross2_weight} gm\n`;
+            report += `- Tumor: Multiple nodules with heterogenous brownish cut-surfaces are seen.\n`;
+            report += `- Tumor size: Dominant nodule is up to ${gross2_tumor_size} cm in size.\n`;
+        }
+        report += "Representative sections are submitted and labeled as follows:\n";
+
+        // --- MICROSCOPIC DESCRIPTION ---
+        report += "\nMICROSCOPIC DESCRIPTION:\n";
+        report += `1. Tumor histologic type: ${document.getElementById('micro_hist_type').value}\n`;
+        report += `2. Tumor size: ${document.getElementById('micro_size1').value || '   '} x ${document.getElementById('micro_size2').value || '   '} cm\n`;
+        report += `3. Encapsulation: ${document.getElementById('micro_encap').value}\n`;
+        report += `4. Capsular invasion: ${document.getElementById('micro_cap_inv').value}\n`;
+        report += `5. Lymph-vascular invasion: ${document.getElementById('micro_lvi').value}\n`;
+        report += `6. Extrathyroid extension: ${document.getElementById('micro_ete').value}\n`;
+        report += `7. Surgical margin involvement: ${document.getElementById('micro_margin').value}\n`;
+        report += `8. Multicentricity: ${document.getElementById('micro_multi').value}\n`;
+        report += `9. Other pathologic finding: ${document.getElementById('micro_other').value}\n`;
+        report += `10. Parathyroid gland: ${document.getElementById('micro_para').value}\n`;
+        
+        report += `11. Lymph nodes:\n`;
+        const ln_vi_pos = document.getElementById('ln_vi_pos').value || '___';
+        const ln_vi_total = document.getElementById('ln_vi_total').value || '___';
+        const ln_vi_size = document.getElementById('ln_vi_size').value || '_____';
+        report += `- Level VI: ${ln_vi_pos}/${ln_vi_total} (positive/ total); largest metastatic size: ${ln_vi_size} mm\n`;
+
+        const ln_iitoiv_pos = document.getElementById('ln_iitoiv_pos').value || '___';
+        const ln_iitoiv_total = document.getElementById('ln_iitoiv_total').value || '___';
+        report += `- Level II, III, IV: ${ln_iitoiv_pos}/${ln_iitoiv_total} (positive/ total)\n`;
+
+        const ln_other_spec = document.getElementById('ln_other_spec').value || '_____';
+        const ln_other_pos = document.getElementById('ln_other_pos').value || '___';
+        const ln_other_total = document.getElementById('ln_other_total').value || '___';
+        report += `- Others (specify) ${ln_other_spec} : ${ln_other_pos}/${ln_other_total} (positive/ total)\n`;
+        
+        const ln_largest_size = document.getElementById('ln_largest_size').value || '__';
+        report += `- Largest size of cancer in node: ${ln_largest_size} mm\n`;
+
+        report += `12. Comments: ${document.getElementById('micro_comments').value}\n`;
+
+        document.getElementById('reportOutput').value = report;
+    }
+
+    function copyReport() {
+        const reportOutput = document.getElementById('reportOutput');
+        if (!reportOutput.value) {
+            alert("Please generate the report first.");
+            return;
+        }
+        reportOutput.select();
+        try {
+            navigator.clipboard.writeText(reportOutput.value);
+            const copyButton = document.getElementById('copyButton');
+            copyButton.textContent = 'Copied!';
+            setTimeout(() => {
+                copyButton.textContent = 'Copy Report';
+            }, 2000);
+        } catch (err) {
+            alert('Failed to copy report. Please copy manually.');
+        }
+    }
+    
+    // Initial call to set up the view
+    window.onload = function() {
+        toggleSpecimenBlocks();
+    };
+</script>
+
+</body>
+</html>

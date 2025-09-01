@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urothelial Carcinoma (TURBT) Report Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 950px;
+            margin: auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #005a9c;
+            border-bottom: 2px solid #005a9c;
+            padding-bottom: 10px;
+        }
+        h1 { font-size: 1.8em; text-align: center; }
+        h2 { font-size: 1.4em; margin-top: 30px; }
+        fieldset {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #fafafa;
+        }
+        legend {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #333;
+            padding: 0 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 5px 0;
+        }
+        .form-group > label {
+            flex-basis: 300px;
+            font-weight: bold;
+            padding-right: 15px;
+        }
+        .form-group .options {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="text"], select, textarea {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        textarea { resize: vertical; min-height: 100px; }
+        .hidden { display: none; }
+        .button-container {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin: 0 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover { background-color: #0056b3; }
+        #reportOutput {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Urothelial Carcinoma (TURBT) Report Generator</h1>
+
+    <form id="reportForm">
+        <!-- FREE TEXT SECTIONS -->
+        <h2>Case Details</h2>
+        <fieldset>
+            <legend>Diagnosis and Gross Description</legend>
+            <div class="form-group">
+                <label for="diagnosis">Final Pathologic Diagnosis:</label>
+                <textarea id="diagnosis" rows="3" placeholder="e.g., URINARY BLADDER, TURBT:&#10;- PAPILLARY UROTHELIAL CARCINOMA, HIGH GRADE&#10;- INVASION INTO SUBEPITHELIAL CONNECTIVE TISSUE (pT1)&#10;- SEE SYNOPTIC REPORT"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="gross_description">Gross Description:</label>
+                <textarea id="gross_description" rows="4" placeholder="e.g., Received in formalin, labeled with patient's name and 'bladder tumor', are multiple fragments of pink-tan tissue measuring 2.5 x 2.0 x 0.8 cm in aggregate. The specimen is entirely submitted in cassette A1."></textarea>
+            </div>
+        </fieldset>
+
+        <!-- SYNOPTIC REPORT SECTION -->
+        <h2>Synoptic Report Input</h2>
+        <fieldset>
+            <legend>Microscopic and Synoptic Findings</legend>
+            <div class="form-group">
+                <label for="hist_type">A. Tumor histological type:</label>
+                <div class="options">
+                    <select id="hist_type" onchange="toggleSpecify('hist_type_specify_div', this.value === 'Other')">
+                        <option>Papillary urothelial carcinoma, non-invasive</option>
+                        <option>Papillary urothelial carcinoma, invasive</option>
+                        <option>Invasive urothelial carcinoma</option>
+                        <option value="Other">Other (specify)</option>
+                    </select>
+                </div>
+            </div>
+            <div id="hist_type_specify_div" class="form-group hidden" style="padding-left: 315px;">
+                <input type="text" id="hist_type_specify" placeholder="Specify other type">
+            </div>
+
+            <div class="form-group">
+                <label for="hist_grade">B. Tumor histological grade:</label>
+                <div class="options"><select id="hist_grade"><option>Low grade</option><option>High grade</option></select></div>
+            </div>
+
+            <div class="form-group">
+                <label for="growth_pattern">C. Tumor growth pattern:</label>
+                <div class="options"><select id="growth_pattern"><option>Papillary growth</option><option>Infiltrative growth</option></select></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="invasion_depth">D. Tumor invasion depth:</label>
+                <div class="options">
+                    <select id="invasion_depth" onchange="toggleSpecify('invasion_depth_specify_div', this.value === 'Other')">
+                        <option value="Non-invasive papillary (Ta)">Non-invasive papillary (Ta)</option>
+                        <option value="Invades subepithelial connective tissue (T1)">Invades subepithelial connective tissue (T1)</option>
+                        <option value="Invades muscularis propria (T2)">Invades muscularis propria (T2)</option>
+                        <option value="Other">Other (specify)</option>
+                    </select>
+                </div>
+            </div>
+            <div id="invasion_depth_specify_div" class="form-group hidden" style="padding-left: 315px;">
+                <input type="text" id="invasion_depth_specify" placeholder="Specify other depth">
+            </div>
+
+            <div class="form-group">
+                <label for="cis">E. Urothelial carcinoma in situ:</label>
+                <div class="options"><select id="cis"><option>Absent</option><option>Present</option></select></div>
+            </div>
+
+            <div class="form-group">
+                <label for="lvi">F. Lympho-vascular invasion:</label>
+                <div class="options"><select id="lvi"><option>Not identified</option><option>Present</option></select></div>
+            </div>
+
+            <div class="form-group">
+                <label for="tumor_base">G. Tumor base:</label>
+                <div class="options">
+                    <select id="tumor_base">
+                        <option>Free of tumor</option>
+                        <option>Presence of tumor element, without finding of muscular invasion</option>
+                        <option>Presence of tumor element, with finding of muscular invasion</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="muscularis">H. Muscularis propria:</label>
+                <div class="options"><select id="muscularis"><option>Present</option><option>Absent</option></select></div>
+            </div>
+        </fieldset>
+    </form>
+
+    <div class="button-container">
+        <button type="button" onclick="generateReport()">Generate Report</button>
+        <button type="button" onclick="copyReport()" id="copyButton">Copy Report</button>
+    </div>
+
+    <h2>Generated Report</h2>
+    <textarea id="reportOutput" rows="25" readonly></textarea>
+</div>
+
+<script>
+    function toggleSpecify(divId, show) {
+        document.getElementById(divId).style.display = show ? 'flex' : 'none';
+    }
+
+    function generateReport() {
+        let report = "";
+
+        // Add free-text sections first
+        const diagnosisText = document.getElementById('diagnosis').value.trim();
+        if (diagnosisText) {
+            report += "FINAL PATHOLOGIC DIAGNOSIS:\n";
+            report += diagnosisText + "\n\n";
+        }
+
+        const grossText = document.getElementById('gross_description').value.trim();
+        if (grossText) {
+            report += "GROSS DESCRIPTION:\n";
+            report += grossText + "\n\n";
+        }
+        
+        // --- SYNOPTIC REPORT ---
+        report += "SYNOPTIC REPORT: URINARY BLADDER, TURBT\n";
+        report += "----------------------------------------\n";
+        
+        // Helper function to get value and handle 'Other (specify)'
+        const getElementValue = (selectId, specifyId) => {
+            const select = document.getElementById(selectId);
+            let value = select.value;
+            if (value === 'Other') {
+                const specifyInput = document.getElementById(specifyId);
+                return `Other (${specifyInput.value.trim() || 'not specified'})`;
+            }
+            return value;
+        };
+
+        report += `A. Tumor histological type: ${getElementValue('hist_type', 'hist_type_specify')}\n`;
+        report += `B. Tumor histological grade: ${document.getElementById('hist_grade').value}\n`;
+        report += `C. Tumor growth pattern: ${document.getElementById('growth_pattern').value}\n`;
+        report += `D. Tumor invasion depth: ${getElementValue('invasion_depth', 'invasion_depth_specify')}\n`;
+        report += `E. Urothelial carcinoma in situ: ${document.getElementById('cis').value}\n`;
+        report += `F. Lympho-vascular invasion: ${document.getElementById('lvi').value}\n`;
+        report += `G. Tumor base: ${document.getElementById('tumor_base').value}\n`;
+        report += `H. Muscularis propria: ${document.getElementById('muscularis').value}\n`;
+        
+        document.getElementById('reportOutput').value = report;
+    }
+
+    function copyReport() {
+        const reportOutput = document.getElementById('reportOutput');
+        if (!reportOutput.value) {
+            alert("Please generate the report first.");
+            return;
+        }
+        reportOutput.select();
+        try {
+            navigator.clipboard.writeText(reportOutput.value);
+            document.getElementById('copyButton').textContent = 'Copied!';
+            setTimeout(() => { document.getElementById('copyButton').textContent = 'Copy Report'; }, 2000);
+        } catch (err) {
+            alert('Failed to copy report. Please copy manually.');
+        }
+    }
+</script>
+
+</body>
+</html>

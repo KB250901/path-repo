@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prostate Cancer (TURP) Report Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 950px;
+            margin: auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #005a9c;
+            border-bottom: 2px solid #005a9c;
+            padding-bottom: 10px;
+        }
+        h1 { font-size: 1.8em; text-align: center; }
+        h2 { font-size: 1.4em; margin-top: 30px; }
+        fieldset {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #fafafa;
+        }
+        legend {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #333;
+            padding: 0 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 5px 0;
+        }
+        .form-group > label {
+            flex-basis: 280px;
+            font-weight: bold;
+            padding-right: 15px;
+        }
+        .form-group .options {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="text"], input[type="number"], select, textarea {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        .short-input {
+            width: 80px;
+            text-align: center;
+        }
+        .output-field {
+            font-weight: bold;
+            background-color: #e9ecef;
+            padding: 8px;
+            border-radius: 4px;
+            min-width: 60px;
+            text-align: center;
+        }
+        textarea { resize: vertical; min-height: 100px; }
+        .button-container {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin: 0 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover { background-color: #0056b3; }
+        #reportOutput {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            width: 100%;
+        }
+        .note {
+            font-size: 0.9em;
+            color: #666;
+            width: 100%;
+            padding-left: 295px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Prostate Cancer (TURP Specimen) Report Generator</h1>
+
+    <form id="reportForm">
+        <!-- FREE TEXT SECTIONS -->
+        <h2>Case Details</h2>
+        <fieldset>
+            <legend>Diagnosis and Gross Description</legend>
+            <div class="form-group">
+                <label for="diagnosis">Final Pathologic Diagnosis:</label>
+                <textarea id="diagnosis" rows="3" placeholder="e.g., PROSTATE, TRANSURETHRAL RESECTION:&#10;- ADENOCARCINOMA, GLEASON SCORE 3+4=7, GRADE GROUP 2&#10;- SEE SYNOPTIC REPORT"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="gross_description">Gross Description:</label>
+                <textarea id="gross_description" rows="4" placeholder="e.g., Received in formalin, labeled with patient's name and 'prostate chips', are multiple fragments of firm, tan-white tissue weighing 25 grams and measuring 5.0 x 4.0 x 1.5 cm in aggregate. The specimen is entirely submitted in cassettes A1-A5."></textarea>
+            </div>
+        </fieldset>
+
+        <!-- SYNOPTIC REPORT SECTION -->
+        <h2>Synoptic Report Input</h2>
+        <fieldset>
+            <legend>Microscopic and Synoptic Findings</legend>
+            <div class="form-group"><label>A. Tumor histological type:</label><span>Adenocarcinoma</span></div>
+            
+            <div class="form-group">
+                <label>B. Tumor histological grade:</label>
+                <div class="options">Grade group (<span id="grade_group_output" class="output-field">1</span>)</div>
+            </div>
+            <div class="form-group" style="padding-left: 30px;">
+                <label>- Gleason score:</label>
+                <div class="options">
+                    primary score (<input type="number" id="gleason_primary" class="short-input" value="3" min="3" max="5" oninput="calculateGleason()">) +
+                    secondary score (<input type="number" id="gleason_secondary" class="short-input" value="3" min="3" max="5" oninput="calculateGleason()">) =
+                    <span id="gleason_total_output" class="output-field">6</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>C. Tumor volume:</label>
+                <div class="options">
+                    <input type="radio" name="volume" value="<5%" id="volume_lt5" checked> <label for="volume_lt5">Less than 5%</label>
+                    <input type="radio" name="volume" value="approx" id="volume_approx"> <label for="volume_approx">Approximately</label>
+                    <input type="number" id="volume_percent" class="short-input" min="0" max="100"> %
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="lvi">D. Lymphovascular invasion:</label>
+                <div class="options">
+                    <select id="lvi">
+                        <option>Not identified</option>
+                        <option>Present</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group"><label>E. Extraprostatic Extension:</label><span>Not applicable</span></div>
+            <div class="form-group"><label>F. Seminal Vesicle Invasion:</label><span>Not applicable</span></div>
+            <div class="form-group"><label>G. Margins:</label><span>Not applicable</span></div>
+            <div class="form-group"><label>H. Lymph node status:</label><span>Not applicable (No lymph nodes submitted or found)</span></div>
+            
+            <div class="form-group">
+                <label for="ihc_comment">I. Immunohistochemistry:</label>
+                <div class="options" style="flex-direction: column; align-items: flex-start; width: 100%;">
+                    <div style="display: flex; align-items: center; width: 100%;">
+                        <span>(performed on the section</span>
+                        <input type="text" id="ihc_section" class="short-input" placeholder="e.g., A1" style="margin: 0 5px;">
+                        <span>):</span>
+                    </div>
+                    <textarea id="ihc_text" rows="3" style="margin-top: 5px;">Loss of the basal cell layer is demonstrated by HMWCK (34βE12) and p63 stain; and the neoplastic cells show aberrant p504s expression, supporting the diagnosis.</textarea>
+                </div>
+            </div>
+        </fieldset>
+    </form>
+
+    <div class="button-container">
+        <button type="button" onclick="generateReport()">Generate Report</button>
+        <button type="button" onclick="copyReport()" id="copyButton">Copy Report</button>
+    </div>
+
+    <h2>Generated Report</h2>
+    <textarea id="reportOutput" rows="25" readonly></textarea>
+</div>
+
+<script>
+    function calculateGleason() {
+        const primary = parseInt(document.getElementById('gleason_primary').value) || 0;
+        const secondary = parseInt(document.getElementById('gleason_secondary').value) || 0;
+        const total = primary + secondary;
+
+        document.getElementById('gleason_total_output').textContent = total;
+
+        let gradeGroup = 0;
+        if (total <= 6) {
+            gradeGroup = 1;
+        } else if (total === 7) {
+            if (primary === 3 && secondary === 4) {
+                gradeGroup = 2;
+            } else if (primary === 4 && secondary === 3) {
+                gradeGroup = 3;
+            }
+        } else if (total === 8) {
+            gradeGroup = 4;
+        } else if (total >= 9) {
+            gradeGroup = 5;
+        }
+        
+        document.getElementById('grade_group_output').textContent = gradeGroup > 0 ? gradeGroup : '--';
+    }
+
+    function generateReport() {
+        let report = "";
+
+        // Add free-text sections first
+        const diagnosisText = document.getElementById('diagnosis').value.trim();
+        if (diagnosisText) {
+            report += "FINAL PATHOLOGIC DIAGNOSIS:\n";
+            report += diagnosisText + "\n\n";
+        }
+
+        const grossText = document.getElementById('gross_description').value.trim();
+        if (grossText) {
+            report += "GROSS DESCRIPTION:\n";
+            report += grossText + "\n\n";
+        }
+        
+        // --- SYNOPTIC REPORT ---
+        report += "SYNOPTIC REPORT: PROSTATE, TURP SPECIMEN\n";
+        report += "----------------------------------------\n";
+        
+        report += "A. Tumor histological type: Adenocarcinoma\n";
+        
+        const gradeGroup = document.getElementById('grade_group_output').textContent;
+        const primary = document.getElementById('gleason_primary').value || '--';
+        const secondary = document.getElementById('gleason_secondary').value || '--';
+        const total = document.getElementById('gleason_total_output').textContent;
+        report += `B. Tumor histological grade: Grade group (${gradeGroup})\n`;
+        report += `   - Gleason score: primary score (${primary}) + secondary score (${secondary}) = ${total}\n`;
+
+        let volumeText = "";
+        if (document.getElementById('volume_lt5').checked) {
+            volumeText = "Less than 5%";
+        } else {
+            const percent = document.getElementById('volume_percent').value || '--';
+            volumeText = `Approximately ${percent}%`;
+        }
+        report += `C. Tumor volume: \n     - ${volumeText}\n`;
+        
+        report += `D. Lymphovascular invasion: \n     - ${document.getElementById('lvi').value}\n`;
+        report += "E. Extraprostatic extension: Not applicable\n";
+        report += "F. Seminal vesicle invasion: Not applicable\n";
+        report += "G. Margins: Not applicable\n";
+        report += "H. Lymph node status: Not applicable (No lymph nodes submitted or found)\n";
+        
+        const ihcSection = document.getElementById('ihc_section').value.trim() || '--';
+        const ihcText = document.getElementById('ihc_text').value.trim();
+        if (ihcText) {
+            report += `I. Immunohistochemistry (performed on the section ${ihcSection}): ${ihcText}\n`;
+        }
+        
+        document.getElementById('reportOutput').value = report;
+    }
+
+    function copyReport() {
+        const reportOutput = document.getElementById('reportOutput');
+        if (!reportOutput.value) {
+            alert("Please generate the report first.");
+            return;
+        }
+        reportOutput.select();
+        try {
+            navigator.clipboard.writeText(reportOutput.value);
+            document.getElementById('copyButton').textContent = 'Copied!';
+            setTimeout(() => { document.getElementById('copyButton').textContent = 'Copy Report'; }, 2000);
+        } catch (err) {
+            alert('Failed to copy report. Please copy manually.');
+        }
+    }
+    
+    // Initial calculation on page load
+    window.onload = calculateGleason;
+</script>
+
+</body>
+</html>
