@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCIS Pathology Report Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .form-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #34495e;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .checkbox-item:hover {
+            background: #e9ecef;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+            transform: scale(1.2);
+        }
+
+        .checkbox-item input[type="checkbox"]:checked + label,
+        .checkbox-item:has(input[type="checkbox"]:checked) {
+            background: rgba(52, 152, 219, 0.1);
+            border-color: #3498db;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .report-section {
+            background: #2c3e50;
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .report-section h2 {
+            color: #ecf0f1;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .report-output {
+            background: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            min-height: 400px;
+            white-space: pre-line;
+            font-size: 0.95rem;
+            color: #ecf0f1;
+            border: 2px solid #3498db;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(149, 165, 166, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(39, 174, 96, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #27ae60;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .success-message.show {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>DCIS Pathology Report Generator</h1>
+            <p>Ductal Carcinoma In Situ Microscopic Description Tool</p>
+        </div>
+
+        <div class="content">
+            <div class="form-section">
+                <h2>Microscopic Parameters</h2>
+                
+                <div class="form-group">
+                    <label for="tumorSize">Tumor Size (mm):</label>
+                    <input type="number" id="tumorSize" step="0.1" placeholder="Enter size in mm">
+                </div>
+
+                <div class="form-group">
+                    <label for="nuclearGrade">Nuclear Grade:</label>
+                    <select id="nuclearGrade">
+                        <option value="">Select grade</option>
+                        <option value="1">Grade 1 (Low)</option>
+                        <option value="2">Grade 2 (Intermediate)</option>
+                        <option value="3">Grade 3 (High)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Architectural Pattern:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="comedo" value="Comedo">
+                            <label for="comedo">Comedo</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cribriform" value="Cribriform">
+                            <label for="cribriform">Cribriform</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="papillary" value="Papillary">
+                            <label for="papillary">Papillary</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="micropapillary" value="Micropapillary">
+                            <label for="micropapillary">Micropapillary</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="solid" value="Solid">
+                            <label for="solid">Solid</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="tumorNecrosis">Tumor Necrosis:</label>
+                    <select id="tumorNecrosis">
+                        <option value="">Select option</option>
+                        <option value="absent">Absent</option>
+                        <option value="present_comedo">Present (Comedo necrosis)</option>
+                        <option value="present_punctate">Present (Punctate necrosis)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="microcalcification">Microcalcification:</label>
+                    <select id="microcalcification">
+                        <option value="">Select option</option>
+                        <option value="absent">Absent</option>
+                        <option value="present_inside">Present (Inside the DCIS)</option>
+                        <option value="present_outside">Present (Outside the DCIS)</option>
+                        <option value="present_both">Present (Inside and outside the DCIS)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="lymphovascular">Peritumor Lymphatic/Vascular Invasion:</label>
+                    <select id="lymphovascular">
+                        <option value="not_identified">Not identified</option>
+                        <option value="present">Present</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="margins">Margins:</label>
+                    <select id="margins">
+                        <option value="">Select option</option>
+                        <option value="negative">Negative</option>
+                        <option value="close">Negative, close margin</option>
+                        <option value="positive">Positive</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="marginDistanceGroup" style="display: none;">
+                    <label for="marginDistance">Closest Margin Distance (mm):</label>
+                    <input type="number" id="marginDistance" step="0.1" placeholder="Enter distance in mm">
+                </div>
+            </div>
+
+            <div class="form-section" style="grid-row: span 2;">
+                <h2>Immunohistochemical Study</h2>
+                
+                <div class="form-group">
+                    <label for="sectionNumber">Section Number:</label>
+                    <input type="text" id="sectionNumber" placeholder="e.g., A1, B2, etc.">
+                </div>
+
+                <div class="form-group">
+                    <label for="erResult">ER (Leica, clone 6F11):</label>
+                    <select id="erResult">
+                        <option value="">Select result</option>
+                        <option value="positive">Positive</option>
+                        <option value="negative">Negative</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="erDetailsGroup" style="display: none;">
+                    <label for="erPercentage">ER Percentage (%):</label>
+                    <input type="number" id="erPercentage" min="0" max="100" placeholder="0-100">
+                    
+                    <label for="erIntensity" style="margin-top: 10px;">ER Intensity:</label>
+                    <select id="erIntensity">
+                        <option value="">Select intensity</option>
+                        <option value="weak">Weak</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="strong">Strong</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="prResult">PR (Novocastra Laboratories, clone 16):</label>
+                    <select id="prResult">
+                        <option value="">Select result</option>
+                        <option value="positive">Positive</option>
+                        <option value="negative">Negative</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="prDetailsGroup" style="display: none;">
+                    <label for="prPercentage">PR Percentage (%):</label>
+                    <input type="number" id="prPercentage" min="0" max="100" placeholder="0-100">
+                    
+                    <label for="prIntensity" style="margin-top: 10px;">PR Intensity:</label>
+                    <select id="prIntensity">
+                        <option value="">Select intensity</option>
+                        <option value="weak">Weak</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="strong">Strong</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
+                    <button class="btn btn-secondary" onclick="clearForm()">Clear Form</button>
+                    <button class="btn btn-success" onclick="copyReport()">Copy Report</button>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h2>Generated Report</h2>
+                <div id="reportOutput" class="report-output">
+                    Generated microscopic description will appear here...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="successMessage" class="success-message">
+        Report copied to clipboard!
+    </div>
+
+    <script>
+        // Show/hide conditional fields
+        document.getElementById('margins').addEventListener('change', function() {
+            const marginDistanceGroup = document.getElementById('marginDistanceGroup');
+            if (this.value === 'close') {
+                marginDistanceGroup.style.display = 'block';
+            } else {
+                marginDistanceGroup.style.display = 'none';
+            }
+        });
+
+        document.getElementById('erResult').addEventListener('change', function() {
+            const erDetailsGroup = document.getElementById('erDetailsGroup');
+            if (this.value === 'positive') {
+                erDetailsGroup.style.display = 'block';
+            } else {
+                erDetailsGroup.style.display = 'none';
+            }
+        });
+
+        document.getElementById('prResult').addEventListener('change', function() {
+            const prDetailsGroup = document.getElementById('prDetailsGroup');
+            if (this.value === 'positive') {
+                prDetailsGroup.style.display = 'block';
+            } else {
+                prDetailsGroup.style.display = 'none';
+            }
+        });
+
+        function generateReport() {
+            let report = "MICROSCOPIC DESCRIPTION:\n\n";
+            report += "1. Histological type: Ductal carcinoma in situ\n\n";
+            
+            // Tumor size
+            const tumorSize = document.getElementById('tumorSize').value;
+            report += `2. Tumor size: ${tumorSize || '_____'} mm\n\n`;
+            
+            // Nuclear grade
+            const nuclearGrade = document.getElementById('nuclearGrade').value;
+            report += `3. Nuclear Grade: ${nuclearGrade || '_____'}\n\n`;
+            
+            // Architectural pattern
+            const patterns = [];
+            const patternCheckboxes = ['comedo', 'cribriform', 'papillary', 'micropapillary', 'solid'];
+            const comedoPresent = document.getElementById('comedo').checked;
+            const nonComedoPatterns = [];
+            
+            patternCheckboxes.forEach(id => {
+                if (document.getElementById(id).checked) {
+                    patterns.push(document.getElementById(id).value);
+                    if (id !== 'comedo') {
+                        nonComedoPatterns.push(document.getElementById(id).value.toLowerCase());
+                    }
+                }
+            });
+            
+            report += "4. Architectural pattern:\n";
+            if (comedoPresent) {
+                report += "   Comedo\n";
+            }
+            if (nonComedoPatterns.length > 0) {
+                report += `   Non-comedo (${nonComedoPatterns.join('/')})\n`;
+            }
+            if (patterns.length === 0) {
+                report += "   Comedo: _____\n   Non-comedo (cribriform/papillary/micropapillary/solid): _____\n";
+            }
+            report += "\n";
+            
+            // Tumor necrosis
+            const tumorNecrosis = document.getElementById('tumorNecrosis').value;
+            let necrosisText = "";
+            switch(tumorNecrosis) {
+                case 'absent':
+                    necrosisText = "absent";
+                    break;
+                case 'present_comedo':
+                    necrosisText = "present (comedo necrosis)";
+                    break;
+                case 'present_punctate':
+                    necrosisText = "present (punctate necrosis)";
+                    break;
+                default:
+                    necrosisText = "absent/present (comedo necrosis/punctate)";
+            }
+            report += `5. Tumor necrosis: ${necrosisText}\n\n`;
+            
+            // Microcalcification
+            const microcalcification = document.getElementById('microcalcification').value;
+            let calcText = "";
+            switch(microcalcification) {
+                case 'absent':
+                    calcText = "absent";
+                    break;
+                case 'present_inside':
+                    calcText = "present (inside the DCIS)";
+                    break;
+                case 'present_outside':
+                    calcText = "present (outside the DCIS)";
+                    break;
+                case 'present_both':
+                    calcText = "present (inside and outside the DCIS)";
+                    break;
+                default:
+                    calcText = "absent/present (inside/outside the DCIS)";
+            }
+            report += `6. Microcalcification: ${calcText}\n\n`;
+            
+            // Lymphovascular invasion
+            const lymphovascular = document.getElementById('lymphovascular').value;
+            report += `7. Peritumor lymphatic/vascular invasion: ${lymphovascular === 'present' ? 'present' : 'not identified'}\n\n`;
+            
+            // Margins
+            const margins = document.getElementById('margins').value;
+            const marginDistance = document.getElementById('marginDistance').value;
+            let marginText = "";
+            switch(margins) {
+                case 'negative':
+                    marginText = "negative";
+                    break;
+                case 'close':
+                    marginText = `negative, closest margin (${marginDistance || '_____'} mm)`;
+                    break;
+                case 'positive':
+                    marginText = "positive";
+                    break;
+                default:
+                    marginText = "negative, closest margin (_____ mm)/Positive";
+            }
+            report += `8. Margins: ${marginText}\n\n`;
+            
+            // Immunohistochemical study
+            const sectionNumber = document.getElementById('sectionNumber').value;
+            report += `IMMUNOHISTOCHEMICAL STUDY: (performed on the section ${sectionNumber || '__'})\n\n`;
+            
+            // ER
+            const erResult = document.getElementById('erResult').value;
+            const erPercentage = document.getElementById('erPercentage').value;
+            const erIntensity = document.getElementById('erIntensity').value;
+            
+            if (erResult === 'positive') {
+                report += `1. ER (Leica, clone 6F11): Positive (${erPercentage || '_____'}%, ${erIntensity || '_____'} nuclear staining).\n\n`;
+            } else if (erResult === 'negative') {
+                report += "1. ER (Leica, clone 6F11): Negative.\n\n";
+            } else {
+                report += "1. ER (Leica, clone 6F11): Positive/Negative (____%, weak/moderate/strong nuclear staining).\n\n";
+            }
+            
+            // PR
+            const prResult = document.getElementById('prResult').value;
+            const prPercentage = document.getElementById('prPercentage').value;
+            const prIntensity = document.getElementById('prIntensity').value;
+            
+            if (prResult === 'positive') {
+                report += `2. PR (Novocastra Laboratories, clone 16): Positive (${prPercentage || '_____'}%, ${prIntensity || '_____'} nuclear staining).`;
+            } else if (prResult === 'negative') {
+                report += "2. PR (Novocastra Laboratories, clone 16): Negative.";
+            } else {
+                report += "2. PR (Novocastra Laboratories, clone 16): Positive/Negative (____%, weak/moderate/strong nuclear staining).";
+            }
+            
+            document.getElementById('reportOutput').textContent = report;
+        }
+
+        function clearForm() {
+            // Clear all form inputs
+            document.querySelectorAll('input, select').forEach(element => {
+                if (element.type === 'checkbox') {
+                    element.checked = false;
+                } else {
+                    element.value = '';
+                }
+            });
+            
+            // Hide conditional fields
+            document.getElementById('marginDistanceGroup').style.display = 'none';
+            document.getElementById('erDetailsGroup').style.display = 'none';
+            document.getElementById('prDetailsGroup').style.display = 'none';
+            
+            // Clear report output
+            document.getElementById('reportOutput').textContent = 'Generated microscopic description will appear here...';
+        }
+
+        function copyReport() {
+            const reportText = document.getElementById('reportOutput').textContent;
+            
+            if (reportText === 'Generated microscopic description will appear here...') {
+                alert('Please generate a report first!');
+                return;
+            }
+            
+            navigator.clipboard.writeText(reportText).then(() => {
+                const successMessage = document.getElementById('successMessage');
+                successMessage.classList.add('show');
+                setTimeout(() => {
+                    successMessage.classList.remove('show');
+                }, 3000);
+            }).catch(err => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = reportText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                const successMessage = document.getElementById('successMessage');
+                successMessage.classList.add('show');
+                setTimeout(() => {
+                    successMessage.classList.remove('show');
+                }, 3000);
+            });
+        }
+
+        // Auto-generate report when form changes
+        document.addEventListener('change', function(e) {
+            if (e.target.matches('input, select')) {
+                // Small delay to allow UI updates
+                setTimeout(generateReport, 100);
+            }
+        });
+
+        // Generate initial report
+        generateReport();
+    </script>
+</body>
+</html>
