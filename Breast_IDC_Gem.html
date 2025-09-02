@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breast Cancer Pathology Report Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+        
+        .form-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #3498db;
+        }
+        
+        .section-title {
+            font-size: 1.4em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+            font-weight: 600;
+        }
+        
+        .field-group {
+            margin-bottom: 20px;
+        }
+        
+        .field-label {
+            display: block;
+            font-weight: 600;
+            color: #34495e;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+        
+        .field-input, .field-select, .field-textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+        }
+        
+        .field-input:focus, .field-select:focus, .field-textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .field-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .inline-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #3498db;
+        }
+        
+        .report-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #27ae60;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .generated-report {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            white-space: pre-wrap;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #2c3e50;
+        }
+        
+        .generate-btn {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.4);
+        }
+        
+        .copy-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+        
+        .copy-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .inline-fields {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Breast Cancer Pathology Report Generator</h1>
+            <p>Interactive Structured Pathology Report System</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="form-container">
+                <div class="form-section">
+                    <h2 class="section-title">📋 Diagnosis Information</h2>
+                    
+                    <div class="field-group">
+                        <label class="field-label">T Stage:</label>
+                        <select class="field-select" id="tStage">
+                            <option value="">Select T Stage</option>
+                            <option value="T1">T1</option>
+                            <option value="T2">T2</option>
+                            <option value="T3">T3</option>
+                            <option value="T4">T4</option>
+                        </select>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">N Stage:</label>
+                        <select class="field-select" id="nStage">
+                            <option value="">Select N Stage</option>
+                            <option value="N0">N0</option>
+                            <option value="N1">N1</option>
+                            <option value="N2">N2</option>
+                            <option value="N3">N3</option>
+                        </select>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Laterality:</label>
+                        <select class="field-select" id="laterality">
+                            <option value="">Select Side</option>
+                            <option value="right">Right</option>
+                            <option value="left">Left</option>
+                        </select>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Procedure Type:</label>
+                        <select class="field-select" id="procedureType">
+                            <option value="">Select Procedure</option>
+                            <option value="modified radical mastectomy">Modified Radical Mastectomy</option>
+                            <option value="partial mastectomy">Partial Mastectomy</option>
+                        </select>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Lymph Node Procedure:</label>
+                        <select class="field-select" id="lymphNodeProcedure">
+                            <option value="">Select Procedure</option>
+                            <option value="axillary lymph node dissection">Axillary Lymph Node Dissection</option>
+                            <option value="sentinel node biopsy">Sentinel Node Biopsy</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h2 class="section-title">🔬 Gross Description</h2>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Lymph Node Sampling:</label>
+                        <select class="field-select" id="lymphNodeSampling">
+                            <option value="">Select Sampling Method</option>
+                            <option value="Complete axillary dissection">Complete Axillary Dissection</option>
+                            <option value="Sentinel lymph node biopsy">Sentinel Lymph Node Biopsy</option>
+                        </select>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Specimen Size - Breast (cm):</label>
+                        <input type="text" class="field-input" id="specimenSizeBreast" placeholder="e.g., 12 x 8 x 5">
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Specimen Size - Skin (cm):</label>
+                        <input type="text" class="field-input" id="specimenSizeSkin" placeholder="e.g., 15 x 10">
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Specimen Size - Axillary Fat (cm):</label>
+                        <input type="text" class="field-input" id="specimenSizeAxillary" placeholder="e.g., 8 x 6 x 4">
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Tumor Size (cm):</label>
+                        <input type="text" class="field-input" id="tumorSize" placeholder="e.g., 3.5 x 2.8 x 2.1">
+                    </div>
+                    
+                    <div class="inline-fields">
+                        <div class="field-group">
+                            <label class="field-label">Tumor Location (o'clock):</label>
+                            <select class="field-select" id="tumorLocation">
+                                <option value="">Select Position</option>
+                                <option value="12">12 o'clock</option>
+                                <option value="1">1 o'clock</option>
+                                <option value="2">2 o'clock</option>
+                                <option value="3">3 o'clock</option>
+                                <option value="4">4 o'clock</option>
+                                <option value="5">5 o'clock</option>
+                                <option value="6">6 o'clock</option>
+                                <option value="7">7 o'clock</option>
+                                <option value="8">8 o'clock</option>
+                                <option value="9">9 o'clock</option>
+                                <option value="10">10 o'clock</option>
+                                <option value="11">11 o'clock</option>
+                            </select>
+                        </div>
+                        
+                        <div class="field-group">
+                            <label class="field-label">Distance to Nipple (cm):</label>
+                            <input type="text" class="field-input" id="distanceToNipple" placeholder="e.g., 4.5">
+                        </div>
+                    </div>
+                    
+                    <div class="inline-fields">
+                        <div class="field-group">
+                            <label class="field-label">Margin from Base (cm):</label>
+                            <input type="text" class="field-input" id="marginBase" placeholder="e.g., 2.0">
+                        </div>
+                        
+                        <div class="field-group">
+                            <label class="field-label">Margin from Lateral (cm):</label>
+                            <input type="text" class="field-input" id="marginLateral" placeholder="e.g., 1.5">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h2 class="section-title">🔍 Microscopic Description</h2>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Histologic Type:</label>
+                        <select class="field-select" id="histologicType">
+                            <option value="">Select Type</option>
+                            <option value="Invasive ductal carcinoma">Invasive Ductal Carcinoma</option>
+                            <option value="Invasive lobular carcinoma">Invasive Lobular Carcinoma</option>
+                            <option value="Mixed ductal and lobular carcinoma">Mixed Ductal and Lobular Carcinoma</option>
+                            <option value="Other invasive carcinoma">Other Invasive Carcinoma</option>
+                        </select>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Size of Invasive Carcinoma (mm):</label>
+                        <input type="text" class="field-input" id="invasiveSize" placeholder="e.g., 35">
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Histologic Grade (Nottingham):</label>
+                        <select class="field-select" id="histologicGrade">
+                            <option value="">Select Grade</option>
+                            <option value="Grade 1 (Score 3-5)">Grade 1 (Score 3-5)</option>
+                            <option value="Grade 2 (Score 6-7)">Grade 2 (Score 6-7)</option>
+                            <option value="Grade 3 (Score 8-9)">Grade 3 (Score 8-9)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="inline-fields">
+                        <div class="field-group">
+                            <label class="field-label">Tubule Formation:</label>
+                            <select class="field-select" id="tubuleFormation">
+                                <option value="">Select Score</option>
+                                <option value="1">1 (>75%)</option>
+                                <option value="2">2 (10-75%)</option>
+                                <option value="3">3 (<10%)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="field-group">
+                            <label class="field-label">Nuclear Pleomorphism:</label>
+                            <select class="field-select" id="nuclearPleomorphism">
+                                <option value="">Select Score</option>
+                                <option value="1">1 (Slight)</option>
+                                <option value="2">2 (Moderate)</option>
+                                <option value="3">3 (Marked)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Mitotic Count:</label>
+                        <select class="field-select" id="mitoticCount">
+                            <option value="">Select Count</option>
+                            <option value="1">1 (≤7/10 HPF)</option>
+                            <option value="2">2 (8-14/10 HPF)</option>
+                            <option value="3">3 (≥15/10 HPF)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Extensive Intraductal Component:</label>
+                        <select class="field-select" id="eic">
+                            <option value="">Select Status</option>
+                            <option value="Present">Present</option>
+                            <option value="Absent">Absent</option>
+                        </select>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Peritumor lymphatic/vascular invasion:</label>
+                        <select class="field-select" id="lymphovascularInvasion">
+                            <option value="">Select Status</option>
+                            <option value="Present">Present</option>
+                            <option value="Absent">Absent</option>
+                        </select>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Closest Margin Distance (mm):</label>
+                        <input type="text" class="field-input" id="closestMargin" placeholder="e.g., 5" value="5">
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Closest Margin Location:</label>
+                        <select class="field-select" id="closestMarginLocation">
+                            <option value="">Select Location</option>
+                            <option value="deep">Deep</option>
+                            <option value="superficial">Superficial</option>
+                            <option value="peripheral (--o'clock)">Peripheral (--o'clock)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h2 class="section-title">🧬 Advanced Features</h2>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Skin Involvement:</label>
+                        <select class="field-select" id="skinInvolvement">
+                            <option value="">Select Status</option>
+                            <option value="Present (macroscopically satellite skin foci)">Present (macroscopically satellite skin foci)</option>
+                            <option value="Absent">Absent</option>
+                        </select>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Chest Wall Invasion:</label>
+                        <select class="field-select" id="chestWallInvasion">
+                            <option value="">Select Status</option>
+                            <option value="Present">Present</option>
+                            <option value="Absent">Absent</option>
+                        </select>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Nipple Status:</label>
+                        <select class="field-select" id="nippleStatus">
+                            <option value="">Select Status</option>
+                            <option value="Not included in specimen">Not included in specimen</option>
+                            <option value="Uninvolved">Uninvolved</option>
+                            <option value="Involved by invasive carcinoma">Involved by invasive carcinoma</option>
+                            <option value="Involved by DCIS">Involved by DCIS</option>
+                            <option value="Paget's disease">Paget's disease</option>
+                        </select>
+                    </div>
+                    
+                    <div class="inline-fields">
+                        <div class="field-group">
+                            <label class="field-label">Lymph Nodes Examined:</label>
+                            <input type="number" class="field-input" id="nodesExamined" placeholder="e.g., 15">
+                        </div>
+                        
+                        <div class="field-group">
+                            <label class="field-label">Macrometastases (>2mm):</label>
+                            <input type="number" class="field-input" id="macrometastases" placeholder="e.g., 3">
+                        </div>
+                    </div>
+                    
+                    <div class="inline-fields">
+                        <div class="field-group">
+                            <label class="field-label">Micrometastases (0.2-2mm):</label>
+                            <input type="number" class="field-input" id="micrometastases" placeholder="e.g., 1">
+                        </div>
+                        
+                        <div class="field-group">
+                            <label class="field-label">Isolated Tumor Cells (<0.2mm):</label>
+                            <input type="number" class="field-input" id="isolatedCells" placeholder="e.g., 0">
+                        </div>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Extranodal Extension (ENE):</label>
+                        <select class="field-select" id="eneStatus">
+                            <option value="">Not Applicable</option>
+                            <option value="with extranodal extension (ENE)">With extranodal extension (ENE)</option>
+                            <option value="without extranodal extension (ENE)">Without extranodal extension (ENE)</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Other Significant Lesions:</label>
+                        <textarea class="field-textarea" id="otherLesions" placeholder="Describe any other significant findings..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h2 class="section-title">🧪 Immunohistochemical Study</h2>
+                    
+                    <div class="field-group">
+                        <label class="field-label" for="er-status">ER (Leica, clone 6F11):</label>
+                        <select class="field-select" id="er-status">
+                            <option value="Positive">Positive</option>
+                            <option value="Negative">Negative</option>
+                        </select>
+                    </div>
+                    <div class="field-group" id="er-details">
+                         <label class="field-label">ER Details (if positive):</label>
+                        <div class="inline-fields">
+                            <input type="number" id="er-percent" placeholder="%" min="0" max="100" class="field-input" value="80">
+                            <select id="er-intensity" class="field-select">
+                                <option value="weak">weak nuclear stainings</option>
+                                <option value="moderate">moderate nuclear stainings</option>
+                                <option value="strong">strong nuclear stainings</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label" for="pr-status">PR (Novocastra, clone 16):</label>
+                        <select class="field-select" id="pr-status">
+                            <option value="Positive">Positive</option>
+                            <option value="Negative">Negative</option>
+                        </select>
+                    </div>
+                    <div class="field-group" id="pr-details">
+                        <label class="field-label">PR Details (if positive):</label>
+                        <div class="inline-fields">
+                            <input type="number" id="pr-percent" placeholder="%" min="0" max="100" class="field-input" value="5">
+                            <select id="pr-intensity" class="field-select">
+                                <option value="weak">weak nuclear stainings</option>
+                                <option value="moderate">moderate nuclear stainings</option>
+                                <option value="strong">strong nuclear stainings</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label" for="her2-status">HER-2/Neu (Zytomed, clone SP3):</label>
+                        <select class="field-select" id="her2-status">
+                            <option value="Negative (score 0)">Negative (score 0)</option>
+                            <option value="Negative (score 1+)">Negative (score 1+)</option>
+                            <option value="Equivocal (score 2+)">Equivocal (score 2+)</option>
+                            <option value="Positive (score 3+)">Positive (score 3+)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label" for="ki67-index">Ki-67 index (%):</label>
+                        <input type="number" id="ki67-index" placeholder="%" min="0" max="100" class="field-input" value="20">
+                    </div>
+
+                    <button class="generate-btn" onclick="generateReport()">🔬 Generate Pathology Report</button>
+                </div>
+            </div>
+            
+            <div class="report-section">
+                <h2 class="section-title">📄 Generated Pathology Report</h2>
+                <div id="generatedReport" class="generated-report">
+                    Click "Generate Pathology Report" to create your structured report...
+                </div>
+                <button class="copy-btn" onclick="copyReport()">📋 Copy Report</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize with sample data for testing
+        window.onload = function() {
+            document.getElementById('tStage').value = 'T2';
+            document.getElementById('nStage').value = 'N1';
+            document.getElementById('laterality').value = 'right';
+            generateReport();
+        };
+        
+        function generateReport() {
+            const report = `DIAGNOSIS:
+
+Invasive ductal carcinoma (T${getValue('tStage')}), with regional lymph nodes status (N${getValue('nStage')}),
+${getValue('laterality')} breast, ${getValue('procedureType')} and
+${getValue('lymphNodeProcedure')}
+
+NOTE:
+
+The pathologic findings of the sentinel lymph node status in the
+previous frozen section [pathology number] have been compiled into
+this report.
+
+GROSS DESCRIPTION:
+
+1. Procedure: ${getValue('procedureType')}
+
+2. Lymph node sampling: ${getValue('lymphNodeSampling')}
+
+3. Specimen laterality: ${getValue('laterality')}
+
+4. Specimen size:
+   - Breast: ${getValue('specimenSizeBreast')} cm
+   - Skin: ${getValue('specimenSizeSkin')} cm
+   - Axillary fat: ${getValue('specimenSizeAxillary')} cm
+
+5. Tumor:
+   - Size: ${getValue('tumorSize')} cm
+   - Location: ${getValue('tumorLocation')} o'clock direction, ${getValue('distanceToNipple')} cm to the nipple.
+   - Margin: ${getValue('marginBase')} cm from the base; ${getValue('marginLateral')} cm from the lateral margins
+
+6. Other specimen:
+
+Representative sections are submitted and labeled as:
+
+RA-RD: tumor
+RE: underlying section margin
+RF: nipple
+RG: lymph node
+
+MICROSCOPIC DESCRIPTION:
+
+1. Histologic type: ${getValue('histologicType')}
+
+2. Size of invasive carcinoma (mm): ${getValue('invasiveSize')}
+
+3. Histologic grade (Nottingham histologic score): ${getValue('histologicGrade')}
+   - Tubule formation: ${getValue('tubuleFormation')}
+   - Nuclear pleomorphism: ${getValue('nuclearPleomorphism')}
+   - Mitotic count: ${getValue('mitoticCount')}
+
+4. Extensive Intraductal Component: ${getValue('eic')}
+
+5. Peritumor lymphatic/vascular invasion: ${getValue('lymphovascularInvasion')}
+
+6. Margins of Excision: Negative, Closest margin (${getValue('closestMargin')} mm from ${getValue('closestMarginLocation')} margin)
+
+7. Extent of tumor
+   - Skin involvement: ${getValue('skinInvolvement')}
+   - Chest wall invasion deeper than pectoralis muscle: ${getValue('chestWallInvasion')}
+
+8. Nipple: ${getValue('nippleStatus')}
+
+9. Nodal status: ${getNodalStatus()}
+   - No. examined: ${getValue('nodesExamined')}
+   - No. macrometastases (>2 mm): ${getValue('macrometastases')}
+   - No. micrometastases (>0.2 ~ 2 mm and/or >200 cells): ${getValue('micrometastases')}
+   - No. isolated tumor cells (<0.2 mm and <200 cells): ${getValue('isolatedCells')}
+
+10. Other significant lesion: ${getValue('otherLesions')}
+
+11. Treatment Effect: Response to presurgical (neoadjuvant) therapy
+    - In the Breast: No residual invasive carcinoma is present in the breast after presurgical therapy
+    - In the Lymph nodes: No lymph node metastases and no prominent fibrous scarring
+
+${getIhcReport()}`;
+
+            document.getElementById('generatedReport').textContent = report;
+        }
+        
+        function getIhcReport() {
+            let ihcText = 'IMMUNOHISTOCHEMICAL STUDY (performed on the section --):\n\n';
+
+            // ER
+            const erStatus = getValue('er-status');
+            let erLine = `1. ER (Leica, clone 6F11): ${erStatus}`;
+            if (erStatus === 'Positive') {
+                const erPercent = getValue('er-percent');
+                const erIntensityEl = document.getElementById('er-intensity');
+                const erIntensityText = erIntensityEl.options[erIntensityEl.selectedIndex].text;
+                erLine += ` (${erPercent || ' '}% ${erIntensityText})`;
+            }
+            ihcText += erLine + '\n\n';
+
+            // PR
+            const prStatus = getValue('pr-status');
+            let prLine = `2. PR (Novocastra, clone 16): ${prStatus}`;
+            if (prStatus === 'Positive') {
+                const prPercent = getValue('pr-percent');
+                const prIntensityEl = document.getElementById('pr-intensity');
+                const prIntensityText = prIntensityEl.options[prIntensityEl.selectedIndex].text;
+                prLine += ` (${prPercent || ' '}% ${prIntensityText})`;
+            }
+            ihcText += prLine + '\n\n';
+
+            // HER-2/Neu
+            const her2El = document.getElementById('her2-status');
+            const her2Text = her2El.options[her2El.selectedIndex].text;
+            ihcText += `3. HER-2/Neu (Zytomed, clone SP3): ${her2Text}\n\n`;
+
+            // Ki-67
+            ihcText += `4. Ki-67 index: ${getValue('ki67-index') || ' '}%`;
+            
+            return ihcText;
+        }
+
+        function getValue(id) {
+            const element = document.getElementById(id);
+            return element ? (element.value || '[Not specified]') : '[Not specified]';
+        }
+
+        // CORRECTION 3: Updated function to include ENE status
+        function getNodalStatus() {
+            const macrometastases = getValue('macrometastases');
+            const micrometastases = getValue('micrometastases');
+            const isolatedCells = getValue('isolatedCells');
+            
+            const totalPositive = (parseInt(macrometastases) || 0) + (parseInt(micrometastases) || 0) + (parseInt(isolatedCells) || 0);
+            const totalExamined = getValue('nodesExamined');
+            
+            if (totalPositive > 0) {
+                const ene = getValue('eneStatus');
+                const eneText = (ene && ene !== 'Not Applicable') ? `, ${ene}` : '';
+                return `Positive (${totalPositive}/${totalExamined}, N${getValue('nStage')})${eneText}`;
+            } else {
+                return `Negative (0/${totalExamined}, N0)`;
+            }
+        }
+
+        function copyReport() {
+            const reportText = document.getElementById('generatedReport').textContent;
+            navigator.clipboard.writeText(reportText).then(function() {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                btn.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+                }, 2000);
+            });
+        }
+        
+        const toggleDetails = (statusElId, detailsElId) => {
+            const statusEl = document.getElementById(statusElId);
+            const detailsEl = document.getElementById(detailsElId);
+            if (statusEl && detailsEl) {
+                detailsEl.style.display = statusEl.value === 'Positive' ? 'block' : 'none';
+            }
+        };
+
+        // Auto-generate report when any input changes
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('change', generateReport);
+                input.addEventListener('input', generateReport);
+            });
+            
+            const erStatusEl = document.getElementById('er-status');
+            const prStatusEl = document.getElementById('pr-status');
+
+            if (erStatusEl) erStatusEl.addEventListener('change', () => toggleDetails('er-status', 'er-details'));
+            if (prStatusEl) prStatusEl.addEventListener('change', () => toggleDetails('pr-status', 'pr-details'));
+
+            // Initial setup
+            toggleDetails('er-status', 'er-details');
+            toggleDetails('pr-status', 'pr-details');
+            generateReport(); // Generate report on initial load
+        });
+    </script>
+</body>
+</html>
