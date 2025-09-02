@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>肺癌結構化病理報告產生器</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+        .report-container {
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+        .input-section {
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+        .copy-button {
+            transition: all 0.2s ease;
+        }
+        .copy-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .stage-card {
+            transition: all 0.3s ease;
+        }
+        .stage-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        .lymph-node-item {
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        .lymph-node-item:hover {
+            border-color: #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .section-card {
+            transition: all 0.2s ease;
+        }
+        .section-card:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+
+        // --- Helper Components ---
+        const InputField = ({ label, value, onChange, type = "text", placeholder = "", unit = "", helpText = "" }) => (
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+                <div className="flex items-center">
+                    <input
+                        type={type}
+                        value={value || ''}
+                        onChange={onChange}
+                        placeholder={placeholder}
+                        className="flex-grow px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                    />
+                    {unit && <span className="ml-2 text-sm text-gray-500 font-medium">{unit}</span>}
+                </div>
+                {helpText && <p className="mt-1 text-xs text-gray-500">{helpText}</p>}
+            </div>
+        );
+
+        const SelectField = ({ label, value, onChange, options, helpText = "" }) => (
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+                <select
+                    value={value || ''}
+                    onChange={onChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                >
+                    {options.map((option, index) => (
+                        <option key={index} value={option.value || option}>
+                            {option.label || option}
+                        </option>
+                    ))}
+                </select>
+                {helpText && <p className="mt-1 text-xs text-gray-500">{helpText}</p>}
+            </div>
+        );
+
+        const Card = ({ title, children, className = "" }) => (
+            <div className={`bg-white p-6 rounded-xl shadow-md mb-6 section-card ${className}`}>
+                <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">{title}</h3>
+                {children}
+            </div>
+        );
+
+        // --- Main Application Component ---
+        const App = () => {
+            // --- State Management ---
+            const [specimens, setSpecimens] = useState([
+                { id: 1, name: 'Lung (segmental), left', size: '12.0 x 6.0 x 3.0', weight: '58' },
+            ]);
+            const [lesionDescription, setLesionDescription] = useState('One tan-white and firm mass is noted.');
+            const [tumorFocalityGross, setTumorFocalityGross] = useState('Unifocal');
+            const [tumorSizeGross, setTumorSizeGross] = useState('2.5 x 2.4 x 2.0');
+            const [marginDistanceGross, setMarginDistanceGross] = useState('1.2');
+            const [lymphNodes, setLymphNodes] = useState([
+                { id: 1, station: 'Interlobar (11)', side: 'left', pieces: 'One', size: '0.6 x 0.6 x 0.3', status: 'Negative' },
+                { id: 2, station: 'Subcarinal (7)', side: 'left', pieces: 'One', size: '1.2 x 0.8 x 0.4', status: 'Negative' },
+                { id: 3, station: 'Pulmonary hilum (10)', side: 'left', pieces: 'One', size: '1.0 x 0.9 x 0.2', status: 'Negative' },
+            ]);
+
+            // Microscopic Description States
+            const [histologicalType, setHistologicalType] = useState('Adenocarcinoma');
+            const [adenocarcinomaSubtype, setAdenocarcinomaSubtype] = useState('Acinar predominant');
+            const [subtypePercentages, setSubtypePercentages] = useState({ 
+                lepidic: 10, acinar: 80, papillary: 5, solid: 5, micropapillary: 0 
+            });
+            const [histologicalGrade, setHistologicalGrade] = useState('Moderately differentiated (G2)');
+            const [tumorFocalityMicro, setTumorFocalityMicro] = useState('Single tumor');
+            const [vascularInvasion, setVascularInvasion] = useState('Not identified');
+            const [stas, setStas] = useState('Present');
+            const [adjacentInvasion, setAdjacentInvasion] = useState('No adjacent structures present');
+            const [involvedStructures, setInvolvedStructures] = useState([]);
+            const [marginStatus, setMarginStatus] = useState('Uninvolved by invasive carcinoma and carcinoma in situ');
+            const [marginDistanceMicro, setMarginDistanceMicro] = useState('');
+            const [pleuralInvasion, setPleuralInvasion] = useState('Not identified (PL0)');
+
+            // Staging States
+            const [tStage, setTStage] = useState('');
+            const [nStage, setNStage] = useState('');
+            const [finalStage, setFinalStage] = useState('');
+            const [report, setReport] = useState('');
+            const [copyStatus, setCopyStatus] = useState('');
+
+            // --- Data & Options ---
+            const histologicalTypeOptions = ['Adenocarcinoma', 'Squamous cell carcinoma', 'Neuroendocrine tumor', 'Other'];
+            const adenoSubtypeOptions = [
+                'Lepidic predominant', 'Acinar predominant', 'Papillary predominant', 
+                'Solid predominant', 'Micropapillary predominant', 'Invasive mucinous adenocarcinoma', 
+                'Colloid adenocarcinoma', 'Fetal adenocarcinoma', 'Enteric adenocarcinoma'
+            ];
+            const gradeOptions = [
+                'Well differentiated (G1)', 'Moderately differentiated (G2)', 
+                'Poorly differentiated (G3)', 'Undifferentiated (G4)'
+            ];
+            const yesNoOptions = ['Not identified', 'Present'];
+            const stasOptions = ['Not identified', 'Present'];
+            const pleuralInvasionOptions = [
+                'Not identified (PL0)', 'PL1: Invasion beyond elastic layer', 
+                'PL2: Invasion to pleural surface', 'PL3: Invasion into parietal pleura'
+            ];
+            const adjacentStructureOptions = [
+                'Main bronchus < 2cm from carina', 'Main bronchus ≥ 2cm from carina', 
+                'Chest wall (parietal pleura, ribs)', 'Phrenic nerve', 'Parietal pericardium', 
+                'Diaphragm', 'Mediastinum', 'Heart', 'Great vessels', 'Trachea', 
+                'Recurrent laryngeal nerve', 'Esophagus', 'Vertebral body', 'Carina'
+            ];
+
+            // --- Lymph Node Management ---
+            const handleLymphNodeChange = (index, field, value) => {
+                const newLymphNodes = [...lymphNodes];
+                newLymphNodes[index][field] = value;
+                setLymphNodes(newLymphNodes);
+            };
+
+            const addLymphNode = () => {
+                setLymphNodes([...lymphNodes, { 
+                    id: lymphNodes.length + 1, 
+                    station: '', 
+                    side: 'left', 
+                    pieces: 'One',
+                    size: '', 
+                    status: 'Negative' 
+                }]);
+            };
+
+            const removeLymphNode = (index) => {
+                setLymphNodes(lymphNodes.filter((_, i) => i !== index));
+            };
+
+            // --- TNM Staging Logic (AJCC 9th Edition) ---
+            const calculateTNM = useCallback(() => {
+                // T Stage Calculation
+                const sizes = tumorSizeGross.split('x').map(s => parseFloat(s.trim())).filter(s => !isNaN(s));
+                const maxSize = Math.max(...sizes, 0);
+                let currentT = '';
+
+                if (maxSize <= 1) currentT = 'T1a';
+                else if (maxSize > 1 && maxSize <= 2) currentT = 'T1b';
+                else if (maxSize > 2 && maxSize <= 3) currentT = 'T1c';
+                else if (maxSize > 3 && maxSize <= 4) currentT = 'T2a';
+                else if (maxSize > 4 && maxSize <= 5) currentT = 'T2b';
+                else if (maxSize > 5 && maxSize <= 7) currentT = 'T3';
+                else if (maxSize > 7) currentT = 'T4';
+                
+                // Refine T based on invasion
+                if (pleuralInvasion === 'PL1: Invasion beyond elastic layer' || pleuralInvasion === 'PL2: Invasion to pleural surface') {
+                    if (maxSize <= 3) currentT = 'T2a';
+                }
+                if (pleuralInvasion === 'PL3: Invasion into parietal pleura' || 
+                    involvedStructures.some(s => ['Chest wall (parietal pleura, ribs)', 'Phrenic nerve', 'Parietal pericardium'].includes(s))) {
+                    currentT = 'T3';
+                }
+                if (involvedStructures.some(s => ['Diaphragm', 'Mediastinum', 'Heart', 'Great vessels', 'Trachea', 'Recurrent laryngeal nerve', 'Esophagus', 'Vertebral body', 'Carina'].includes(s))) {
+                    currentT = 'T4';
+                }
+
+                setTStage(currentT);
+
+                // N Stage Calculation
+                const positiveNodes = lymphNodes.filter(ln => ln.status === 'Positive');
+                let nPositiveStations = { 'N1': false, 'N2': false, 'N3': false };
+
+                positiveNodes.forEach(node => {
+                    const station = parseInt(node.station.match(/\d+/)?.[0] || 0);
+                    if (station >= 10 && station <= 14) nPositiveStations['N1'] = true;
+                    if (station >= 2 && station <= 9) nPositiveStations['N2'] = true;
+                    if (station === 1) nPositiveStations['N3'] = true;
+                });
+
+                let currentN = 'N0';
+                if (nPositiveStations['N3']) currentN = 'N3';
+                else if (nPositiveStations['N2']) currentN = 'N2';
+                else if (nPositiveStations['N1']) currentN = 'N1';
+
+                setNStage(currentN);
+                setFinalStage(`${currentT}${currentN}`);
+
+            }, [tumorSizeGross, pleuralInvasion, involvedStructures, lymphNodes]);
+            
+            useEffect(() => {
+                calculateTNM();
+            }, [calculateTNM]);
+
+            // --- Report Generation ---
+            const generateReport = useCallback(() => {
+                const formatAdenoSubtypes = () => {
+                    if (histologicalType !== 'Adenocarcinoma') return '';
+                    const percentages = Object.entries(subtypePercentages)
+                        .filter(([, value]) => value > 0)
+                        .map(([key, value]) => `${key} (${value}%)`)
+                        .join(', ');
+                    return `\n[Percentage of the subtypes present: ${percentages}]`;
+                };
+                
+                const formatLymphNodes = () => {
+                    const totalNodes = lymphNodes.length;
+                    const positiveNodes = lymphNodes.filter(n => n.status === 'Positive').length;
+                    return `Metastasis in ${positiveNodes}/${totalNodes} lymph node(s) (${nStage})`;
+                };
+
+                const reportText = `PATHOLOGY REPORT
+==================
+
+GROSS DESCRIPTION:
+Specimens are submitted in ${specimens.length + lymphNodes.length} labeled containers.
+${specimens.map((spec, index) => `
+#${index + 1} [${spec.name}]:
+   - Specimen size and weight: ${spec.size} cm, ${spec.weight} grams
+   - Lesion: ${lesionDescription}
+   - Tumor focality: ${tumorFocalityGross}
+   - Tumor size: ${tumorSizeGross} cm
+   - Margin distance: ${marginDistanceGross} cm from the nearest margin`).join('\n')}
+${lymphNodes.map((ln, index) => `
+#${specimens.length + index + 1} [${ln.station} lymph node, ${ln.side}]:
+   - ${ln.pieces || 'One'} piece(s), measuring ${ln.size} cm`).join('')}
+
+MICROSCOPIC DESCRIPTION:
+1.  Histological type [According to classification published by the World Health Organization (WHO) for tumors of the lung, 2021]: ${histologicalType}${histologicalType === 'Adenocarcinoma' ? `, ${adenocarcinomaSubtype}` : ''}.${formatAdenoSubtypes()}
+2.  Histological grade: ${histologicalGrade}
+3.  Tumor size: ${tumorSizeGross} cm
+4.  Tumor focality: ${tumorFocalityMicro}
+5.  Venous/ Lymphatic invasion: ${vascularInvasion}
+6.  Spread through air spaces (STAS): ${stas}
+7.  Direct invasion of adjacent structures: ${adjacentInvasion}${involvedStructures.length > 0 ? `\n    + Specify involved structure(s): ${involvedStructures.join(', ')}` : ''}
+8.  Margin status: ${marginStatus}${marginStatus.startsWith('Uninvolved') ? ` [Distance of invasive carcinoma from closest margin: ${marginDistanceMicro || marginDistanceGross} cm]` : ''}
+9.  Visceral pleura Invasion [evaluated with elastic stain]: ${pleuralInvasion}
+10. Lymph nodes status: ${formatLymphNodes()}
+11. Tumor staging (AJCC 9th edition): ${finalStage}.`;
+
+                setReport(reportText.trim());
+            }, [specimens, lymphNodes, lesionDescription, tumorFocalityGross, tumorSizeGross, marginDistanceGross, histologicalType, adenocarcinomaSubtype, subtypePercentages, histologicalGrade, tumorFocalityMicro, vascularInvasion, stas, adjacentInvasion, involvedStructures, marginStatus, marginDistanceMicro, pleuralInvasion, nStage, finalStage]);
+
+            useEffect(() => {
+                generateReport();
+            }, [generateReport]);
+
+            // --- Copy to Clipboard Function ---
+            const copyToClipboard = async () => {
+                try {
+                    await navigator.clipboard.writeText(report);
+                    setCopyStatus('已複製！');
+                    setTimeout(() => setCopyStatus(''), 2000);
+                } catch (err) {
+                    setCopyStatus('複製失敗');
+                    setTimeout(() => setCopyStatus(''), 2000);
+                }
+            };
+
+            // --- Download Report as Text File ---
+            const downloadReport = () => {
+                const element = document.createElement("a");
+                const file = new Blob([report], {type: 'text/plain'});
+                element.href = URL.createObjectURL(file);
+                element.download = `肺癌病理報告_${new Date().toISOString().split('T')[0]}.txt`;
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+            };
+
+            return (
+                <div className="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
+                    <header className="bg-white shadow-sm border-b border-gray-200">
+                        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h1 className="text-3xl font-bold text-gray-900">肺癌結構化病理報告產生器</h1>
+                                    <p className="text-sm text-gray-600 mt-2">Lung Cancer Structured Pathology Report Generator</p>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <span className="text-sm text-gray-500">AJCC 9th Edition</span>
+                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                        <div className="lg:grid lg:grid-cols-2 lg:gap-8">
+                            {/* Input Form Column */}
+                            <div className="input-section">
+                                <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                                    <h2 className="text-2xl font-bold text-indigo-700 mb-6 flex items-center">
+                                        <span className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3 text-indigo-600 font-bold">1</span>
+                                        報告資料輸入
+                                    </h2>
+
+                                    <Card title="📋 大體描述 (Gross Description)">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <InputField 
+                                                label="檢體大小" 
+                                                value={specimens[0].size} 
+                                                onChange={(e) => { 
+                                                    const newSpec = [...specimens]; 
+                                                    newSpec[0].size = e.target.value; 
+                                                    setSpecimens(newSpec);
+                                                }} 
+                                                unit="cm" 
+                                            />
+                                            <InputField 
+                                                label="檢體重量" 
+                                                value={specimens[0].weight} 
+                                                onChange={(e) => { 
+                                                    const newSpec = [...specimens]; 
+                                                    newSpec[0].weight = e.target.value; 
+                                                    setSpecimens(newSpec);
+                                                }} 
+                                                unit="grams" 
+                                            />
+                                        </div>
+                                        <InputField 
+                                            label="病灶描述" 
+                                            value={lesionDescription} 
+                                            onChange={(e) => setLesionDescription(e.target.value)} 
+                                        />
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <SelectField 
+                                                label="腫瘤灶性" 
+                                                value={tumorFocalityGross} 
+                                                onChange={(e) => setTumorFocalityGross(e.target.value)} 
+                                                options={['Unifocal', 'Multifocal']} 
+                                            />
+                                            <InputField 
+                                                label="至最近邊緣距離" 
+                                                value={marginDistanceGross} 
+                                                onChange={(e) => setMarginDistanceGross(e.target.value)} 
+                                                unit="cm" 
+                                            />
+                                        </div>
+                                        <InputField 
+                                            label="腫瘤大小 (最大徑)" 
+                                            value={tumorSizeGross} 
+                                            onChange={(e) => setTumorSizeGross(e.target.value)} 
+                                            unit="cm" 
+                                            helpText="請輸入三維尺寸, 例如 2.5 x 2.4 x 2.0" 
+                                        />
+                                        
+                                        <div className="mt-6 pt-4 border-t border-gray-200">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h4 className="text-md font-medium text-gray-900">🔗 淋巴結 (Lymph Nodes)</h4>
+                                                <button 
+                                                    onClick={addLymphNode} 
+                                                    className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors duration-200"
+                                                >
+                                                    + 新增淋巴結
+                                                </button>
+                                            </div>
+                                            {lymphNodes.map((ln, index) => (
+                                                <div key={ln.id} className="lymph-node-item grid grid-cols-1 md:grid-cols-4 gap-3 border border-gray-200 p-4 rounded-lg mb-3 relative">
+                                                    <button 
+                                                        onClick={() => removeLymphNode(index)} 
+                                                        className="absolute top-2 right-2 w-6 h-6 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full flex items-center justify-center text-lg font-bold"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                    <InputField 
+                                                        label="淋巴結站" 
+                                                        value={ln.station} 
+                                                        onChange={(e) => handleLymphNodeChange(index, 'station', e.target.value)} 
+                                                        placeholder="e.g., Subcarinal (7)" 
+                                                    />
+                                                    <InputField 
+                                                        label="組織塊數" 
+                                                        value={ln.pieces} 
+                                                        onChange={(e) => handleLymphNodeChange(index, 'pieces', e.target.value)} 
+                                                        placeholder="e.g., One" 
+                                                    />
+                                                    <InputField 
+                                                        label="大小" 
+                                                        value={ln.size} 
+                                                        onChange={(e) => handleLymphNodeChange(index, 'size', e.target.value)} 
+                                                        unit="cm" 
+                                                    />
+                                                    <SelectField 
+                                                        label="轉移狀態" 
+                                                        value={ln.status} 
+                                                        onChange={(e) => handleLymphNodeChange(index, 'status', e.target.value)} 
+                                                        options={['Negative', 'Positive']} 
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </Card>
+                                    
+                                    <Card title="🔬 鏡下描述 (Microscopic Description)">
+                                        <SelectField 
+                                            label="組織學型態" 
+                                            value={histologicalType} 
+                                            onChange={(e) => setHistologicalType(e.target.value)} 
+                                            options={histologicalTypeOptions} 
+                                        />
+                                        {histologicalType === 'Adenocarcinoma' && (
+                                            <>
+                                                <SelectField 
+                                                    label="腺癌亞型" 
+                                                    value={adenocarcinomaSubtype} 
+                                                    onChange={(e) => setAdenocarcinomaSubtype(e.target.value)} 
+                                                    options={adenoSubtypeOptions} 
+                                                />
+                                                <div className="bg-gray-50 p-4 rounded-lg">
+                                                    <h5 className="text-sm font-medium text-gray-700 mb-3">亞型百分比 (%)</h5>
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                        {Object.keys(subtypePercentages).map(key => (
+                                                            <InputField 
+                                                                key={key} 
+                                                                label={`${key.charAt(0).toUpperCase() + key.slice(1)}`} 
+                                                                type="number" 
+                                                                value={subtypePercentages[key]} 
+                                                                onChange={(e) => setSubtypePercentages({
+                                                                    ...subtypePercentages, 
+                                                                    [key]: parseInt(e.target.value) || 0
+                                                                })} 
+                                                                unit="%"
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <SelectField 
+                                                label="組織學分級" 
+                                                value={histologicalGrade} 
+                                                onChange={(e) => setHistologicalGrade(e.target.value)} 
+                                                options={gradeOptions} 
+                                            />
+                                            <SelectField 
+                                                label="腫瘤灶性" 
+                                                value={tumorFocalityMicro} 
+                                                onChange={(e) => setTumorFocalityMicro(e.target.value)} 
+                                                options={['Single tumor', 'Multiple tumors']} 
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <SelectField 
+                                                label="血管/淋巴管侵犯" 
+                                                value={vascularInvasion} 
+                                                onChange={(e) => setVascularInvasion(e.target.value)} 
+                                                options={yesNoOptions} 
+                                            />
+                                            <SelectField 
+                                                label="氣道播散 (STAS)" 
+                                                value={stas} 
+                                                onChange={(e) => setStas(e.target.value)} 
+                                                options={stasOptions} 
+                                            />
+                                        </div>
+                                        <SelectField 
+                                            label="肋膜侵犯 (Visceral Pleura Invasion)" 
+                                            value={pleuralInvasion} 
+                                            onChange={(e) => setPleuralInvasion(e.target.value)} 
+                                            options={pleuralInvasionOptions} 
+                                        />
+                                        <SelectField 
+                                            label="鄰近結構侵犯" 
+                                            value={adjacentInvasion} 
+                                            onChange={(e) => setAdjacentInvasion(e.target.value)} 
+                                            options={['No adjacent structures present', 'Present']} 
+                                        />
+                                        {adjacentInvasion === 'Present' && (
+                                            <div className="bg-yellow-50 p-4 rounded-lg">
+                                                <label className="block text-sm font-medium text-gray-700 mb-3">受侵犯的結構 (可多選)</label>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                    {adjacentStructureOptions.map(opt => (
+                                                        <div key={opt} className="flex items-center p-2 hover:bg-yellow-100 rounded">
+                                                            <input 
+                                                                type="checkbox" 
+                                                                id={opt} 
+                                                                value={opt} 
+                                                                checked={involvedStructures.includes(opt)} 
+                                                                onChange={(e) => {
+                                                                    const checked = e.target.checked;
+                                                                    setInvolvedStructures(prev => 
+                                                                        checked ? [...prev, opt] : prev.filter(s => s !== opt)
+                                                                    );
+                                                                }} 
+                                                                className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" 
+                                                            />
+                                                            <label htmlFor={opt} className="ml-2 block text-sm text-gray-900 cursor-pointer">
+                                                                {opt}
+                                                            </label>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        <SelectField 
+                                            label="切緣狀態" 
+                                            value={marginStatus} 
+                                            onChange={(e) => setMarginStatus(e.target.value)} 
+                                            options={[
+                                                'Uninvolved by invasive carcinoma and carcinoma in situ', 
+                                                'Involved by invasive carcinoma', 
+                                                'Involved by carcinoma in situ'
+                                            ]} 
+                                        />
+                                        {marginStatus.startsWith('Uninvolved') && (
+                                            <InputField 
+                                                label="最近切緣距離 (鏡下)" 
+                                                value={marginDistanceMicro} 
+                                                onChange={(e) => setMarginDistanceMicro(e.target.value)} 
+                                                unit="cm" 
+                                                placeholder="若無填寫則使用大體距離" 
+                                            />
+                                        )}
+                                    </Card>
+
+                                    <Card title="📊 病理分期 (Pathologic Staging - AJCC 9th Ed.)">
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div className="stage-card p-6 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl text-center">
+                                                <div className="text-sm font-medium text-blue-800 mb-2">T Stage</div>
+                                                <div className="text-3xl font-bold text-blue-900">{tStage || '...'}</div>
+                                            </div>
+                                            <div className="stage-card p-6 bg-gradient-to-br from-green-100 to-green-200 rounded-xl text-center">
+                                                <div className="text-sm font-medium text-green-800 mb-2">N Stage</div>
+                                                <div className="text-3xl font-bold text-green-900">{nStage || '...'}</div>
+                                            </div>
+                                            <div className="stage-card p-6 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl text-center">
+                                                <div className="text-sm font-medium text-purple-800 mb-2">Final Stage</div>
+                                                <div className="text-3xl font-bold text-purple-900">{finalStage || '...'}</div>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </div>
+                            </div>
+
+                            {/* Report Output Column */}
+                            <div className="mt-6 lg:mt-0">
+                                <div className="bg-gray-900 text-white rounded-xl shadow-lg h-full relative">
+                                    <div className="flex items-center justify-between p-6 border-b border-gray-700">
+                                        <h2 className="text-2xl font-bold text-gray-100 flex items-center">
+                                            <span className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center mr-3 text-gray-300 font-bold">2</span>
+                                            即時預覽報告
+                                        </h2>
+                                        <div className="flex space-x-2">
+                                            <button 
+                                                onClick={copyToClipboard}
+                                                className="copy-button px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm flex items-center space-x-2"
+                                            >
+                                                <span>📋</span>
+                                                <span>{copyStatus || '複製報告'}</span>
+                                            </button>
+                                            <button 
+                                                onClick={downloadReport}
+                                                className="copy-button px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg text-sm flex items-center space-x-2"
+                                            >
+                                                <span>💾</span>
+                                                <span>下載</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="report-container p-6">
+                                        <pre className="whitespace-pre-wrap break-words text-sm leading-relaxed font-mono">
+                                            {report}
+                                        </pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        // Render the application
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
