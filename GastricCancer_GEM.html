@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gastric Cancer Pathology Report Generator</title>
+    <style>
+        :root { --primary-color: #c62828; --primary-hover: #8e0000; --text-dark: #212121; --text-medium: #424242; --bg-light: #fbe9e7; --bg-medium: #ffccbc; --border-color: #ffab91; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--bg-light); line-height: 1.6; padding: 1rem; }
+        .container { max-width: 1500px; margin: auto; background: white; border-radius: 0.75rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; }
+        .main-grid { display: grid; grid-template-columns: 1fr; gap: 2rem; padding: 1.5rem; }
+        @media (min-width: 1200px) { .main-grid { grid-template-columns: 7fr 6fr; } }
+        header { padding: 1.5rem; text-align: center; background-color: var(--primary-color); color: white; }
+        h1 { font-size: 1.875rem; font-weight: 700; }
+        h2 { font-size: 1.25rem; font-weight: 600; color: var(--text-dark); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary-color); }
+        fieldset { border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem; }
+        legend { font-weight: 600; font-size: 1.1rem; color: var(--primary-color); padding: 0 0.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-medium); margin-bottom: 0.5rem; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 0.625rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; background-color: white; transition: all 0.2s; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.2); }
+        .btn { padding: 0.625rem 1.25rem; border-radius: 0.375rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .output-section { background-color: #fff3e0; padding: 1.5rem; border-radius: 0.5rem; display: flex; flex-direction: column; }
+        #reportOutput { flex-grow: 1; background-color: #ffffff; border: 1px solid var(--border-color); border-radius: 0.375rem; padding: 1rem; font-family: "Courier New", Courier, monospace; font-size: 0.9rem; white-space: pre-wrap; overflow-y: auto; min-height: 600px; }
+        .hidden { display: none !important; }
+        .staging-output { background-color: var(--primary-color); color: white; padding: 0.75rem; border-radius: 0.375rem; text-align: center; font-weight: 600; font-size: 1.2rem; margin-top: 1rem; }
+        .inline-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+        .specimen-block { border: 1px dashed var(--border-color); padding: 1rem; margin-top: 1rem; border-radius: 0.5rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header><h1>Gastric Cancer Pathology Report Generator</h1></header>
+        <div class="main-grid">
+            <form id="gc-form">
+                <fieldset>
+                    <legend>Gross Description</legend>
+                    <div class="inline-group">
+                        <div class="form-group"><label for="specimen_count" class="form-label">No. of Containers</label><input type="number" id="specimen_count" class="form-input" min="1" value="1"></div>
+                        <div class="form-group"><label for="procedure" class="form-label">A. Procedure</label><select id="procedure" class="form-select"><option>Partial gastrectomy, distal</option><option>Partial gastrectomy, proximal</option><option>Total gastrectomy</option><option>Endoscopic resection</option></select></div>
+                    </div>
+                    <div class="form-group"><label class="form-label">B. Specimen Size</label><div class="inline-group"><div><label class="form-label">Greater Curvature (cm)</label><input type="number" step="0.1" id="size_greater" class="form-input"></div><div><label class="form-label">Lesser Curvature (cm)</label><input type="number" step="0.1" id="size_lesser" class="form-input"></div></div></div>
+                    <div class="form-group"><label class="form-label">D. Tumor Site</label><div class="inline-group">
+                        <select id="tumor_site_loc"><option>Antrum</option><option>Body</option><option>Cardia</option></select>
+                        <select id="tumor_site_wall"><option>Posterior wall</option><option>Anterior wall</option><option>Lesser curvature</option><option>Greater curvature</option></select>
+                    </div></div>
+                    <div class="form-group"><label class="form-label">F. Tumor Size (Gross, cm)</label><div class="inline-group"><input type="number" step="0.1" id="tumor_size_l" class="form-input" placeholder="L"><input type="number" step="0.1" id="tumor_size_w" class="form-input" placeholder="W"><input type="number" step="0.1" id="tumor_size_d" class="form-input" placeholder="D"></div></div>
+                    <div class="form-group">
+                        <label class="form-label">G. Tumor Configuration</label>
+                        <div class="inline-group">
+                            <select id="tumor_stage_type"><option value="advanced">Advanced</option><option value="early">Early</option></select>
+                            <select id="config_advanced" class="form-select"><option>Type I (polypoid)</option><option>Type II (ulcerated)</option><option>Type III (ulcerated and infiltrating)</option><option>Type IV (diffusely infiltration)</option></select>
+                            <select id="config_early" class="form-select hidden"><option>Type I (protruded)</option><option>Type IIa (elevated)</option><option>Type IIb (flat)</option><option>Type IIc (depressed)</option><option>Type III (excavated)</option></select>
+                        </div>
+                    </div>
+                     <div id="additional_specimens_container"></div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Microscopic Description</legend>
+                    <div class="inline-group">
+                        <div class="form-group"><label for="hist_type" class="form-label">A. Histological Type</label><select id="hist_type" class="form-select"><option>Adenocarcinoma</option></select></div>
+                        <div class="form-group"><label for="hist_grade" class="form-label">B. Histological Grade</label><select id="hist_grade" class="form-select"><option>Moderately differentiated</option><option>Well differentiated</option><option>Poorly differentiated</option><option>Undifferentiated</option></select></div>
+                    </div>
+                     <div class="form-group">
+                        <label for="tumor_invasion" class="form-label">D. Tumor Invasion (select deepest)</label>
+                        <select id="tumor_invasion" class="form-select">
+                            <option value="Tis">Tis: Carcinoma in situ</option>
+                            <option value="T1a">T1a: Tumor invades lamina propria or muscularis mucosae</option>
+                            <option value="T1b">T1b: Tumor invades submucosa</option>
+                            <option value="T2">T2: Tumor invades muscularis propria</option>
+                            <option value="T3">T3: Tumor penetrates subserosal connective tissue</option>
+                            <option value="T4a">T4a: Tumor invades serosa (visceral peritoneum)</option>
+                            <option value="T4b">T4b: Tumor invades adjacent structures</option>
+                        </select>
+                    </div>
+                    <div class="inline-group">
+                        <div class="form-group"><label for="lvi" class="form-label">E. Lymphatic/Vascular Invasion</label><select id="lvi" class="form-select"><option>absent</option><option>present</option></select></div>
+                        <div class="form-group"><label for="pni" class="form-label">F. Perineural Invasion</label><select id="pni" class="form-select"><option>absent</option><option>present</option></select></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">G. Surgical Margins</label>
+                        <div class="inline-group">
+                            <div><label class="form-label">Proximal:</label><select id="margin_prox_status"><option value="uninvolved">uninvolved</option><option value="Involved">Involved</option></select><div id="margin_prox_dist_div"><input type="number" step="0.1" id="margin_prox_dist" class="form-input" placeholder="cm"></div></div>
+                            <div><label class="form-label">Distal:</label><select id="margin_dist_status"><option value="uninvolved">uninvolved</option><option value="Involved">Involved</option></select><div id="margin_dist_dist_div"><input type="number" step="0.1" id="margin_dist_dist" class="form-input" placeholder="cm"></div></div>
+                            <div><label class="form-label">Radial:</label><select id="margin_rad_status"><option value="uninvolved">uninvolved</option><option value="Involved">Involved</option></select><div id="margin_rad_dist_div"><input type="number" id="margin_rad_dist" class="form-input" placeholder="mm"></div></div>
+                        </div>
+                    </div>
+                     <div class="form-group">
+                        <label class="form-label">H. Lymph Node Status</label>
+                        <div class="inline-group">
+                            <div><label class="form-label">Positive Nodes</label><input type="number" id="ln_positive" class="form-input" value="0" min="0"></div>
+                            <div><label class="form-label">Total Examined</label><input type="number" id="ln_total" class="form-input" value="0" min="0"></div>
+                        </div>
+                        <div id="ene_details" class="form-group hidden" style="margin-top: 1rem;">
+                           <label for="ene_status" class="form-label">Extra-nodal Extension (ENE):</label>
+                           <select id="ene_status" class="form-select">
+                               <option>not identified</option>
+                               <option>present</option>
+                           </select>
+                        </div>
+                    </div>
+                </fieldset>
+            </form>
+            
+            <div class="output-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2>Generated Report</h2>
+                    <button id="copyBtn" class="btn btn-primary">Copy Report</button>
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Tumor Staging (AJCC)</label>
+                    <div id="staging_output" class="staging-output">pTX pNX</div>
+                </div>
+                <pre id="reportOutput"></pre>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('gc-form');
+    
+    const updateStaging = () => {
+        // --- T-Stage Logic ---
+        const pT = document.getElementById('tumor_invasion').value || 'TX';
+
+        // --- N-Stage Logic ---
+        const posNodes = parseInt(document.getElementById('ln_positive').value);
+        let pN = 'NX';
+        if (!isNaN(posNodes)) {
+            if (posNodes === 0) pN = 'N0';
+            else if (posNodes >= 1 && posNodes <= 2) pN = 'N1';
+            else if (posNodes >= 3 && posNodes <= 6) pN = 'N2';
+            else if (posNodes >= 7 && posNodes <= 15) pN = 'N3a';
+            else if (posNodes >= 16) pN = 'N3b';
+        }
+
+        document.getElementById('staging_output').textContent = `p${pT} p${pN}`;
+        return { pT, pN };
+    };
+
+    const generateReport = () => {
+        const { pT, pN } = updateStaging();
+        const getValue = id => document.getElementById(id).value || '___';
+        
+        let report = "DIAGNOSIS:\n[Enter Diagnosis Here]\n\n";
+
+        // --- GROSS DESCRIPTION ---
+        let gross = "GROSS DESCRIPTION:\n";
+        const specimenCount = parseInt(getValue('specimen_count')) || 1;
+        gross += `${specimenCount} specimen${specimenCount > 1 ? 's are' : ' is'} submitted in ${specimenCount} labeled container${specimenCount > 1 ? 's' : ''}.\n`;
+        gross += `A. Procedure: ${getValue('procedure')}\n`;
+        gross += `B. Specimen size: Greater curvature, ${getValue('size_greater')} cm; Lesser curvature, ${getValue('size_lesser')} cm\n`;
+        gross += `D. Tumor site: ${getValue('tumor_site_loc')}; ${getValue('tumor_site_wall')}\n`;
+        gross += `F. Tumor size: ${getValue('tumor_size_l')} x ${getValue('tumor_size_w')} x ${getValue('tumor_size_d')} cm\n`;
+        const stageType = getValue('tumor_stage_type');
+        const config = stageType === 'early' ? getValue('config_early') : getValue('config_advanced');
+        gross += `G. Tumor confirguration: For ${stageType} cancer: ${config}\n`;
+        if (specimenCount > 1) {
+             for (let i = 2; i <= specimenCount; i++) {
+                gross += `   - Additional Specimen #${i} (${getValue(`specimen_${i}_desc`)}): ${getValue(`specimen_${i}_size`)} cm\n`;
+            }
+        }
+        gross += '\n';
+        
+        // --- MICROSCOPIC DESCRIPTION ---
+        let micro = "MICROSCOPIC DESCRIPTION:\n";
+        micro += `A. Tumor histological type: ${getValue('hist_type')}\n`;
+        micro += `B. Tumor histological grade: ${getValue('hist_grade')}\n`;
+        micro += `D. Tumor invasion: ${pT} (${document.querySelector('#tumor_invasion option:checked').textContent.split(': ')[1]})\n`;
+        micro += `E. Lymphatic/vascular invasion: ${getValue('lvi')}\n`;
+        micro += `F. Perineural invasion: ${getValue('pni')}\n`;
+        
+        let proxMargin = getValue('margin_prox_status');
+        if(proxMargin === 'uninvolved') proxMargin += `, ${getValue('margin_prox_dist')} cm in distance`;
+        let distMargin = getValue('margin_dist_status');
+        if(distMargin === 'uninvolved') distMargin += `, ${getValue('margin_dist_dist')} cm in distance`;
+        let radMargin = getValue('margin_rad_status');
+        if(radMargin === 'uninvolved') radMargin += `, ${getValue('margin_rad_dist')} mm in distance`;
+        micro += `G. Surgical margins:\n   1. Proximal: ${proxMargin}\n   2. Distal: ${distMargin}\n   3. Radial: ${radMargin}\n`;
+        
+        const posNodes = parseInt(getValue('ln_positive'));
+        micro += `H. Lymph node status:\n   1. Metastasis: detected in ${getValue('ln_positive')} of the ${getValue('ln_total')} LNs found (${pN})\n`;
+        if (!isNaN(posNodes) && posNodes > 0) {
+            micro += `   2. Extra-nodal Extension (ENE): ${getValue('ene_status')}\n`;
+        }
+        
+        document.getElementById('reportOutput').textContent = report + gross + micro;
+    };
+
+    const updateSpecimenFields = () => {
+        const container = document.getElementById('additional_specimens_container');
+        container.innerHTML = '';
+        const count = parseInt(document.getElementById('specimen_count').value) || 1;
+        if (count > 1) {
+            for (let i = 2; i <= count; i++) {
+                const block = document.createElement('div');
+                block.className = 'specimen-block';
+                block.innerHTML = `
+                    <h4>Additional Specimen #${i}</h4>
+                    <div class="form-group"><label class="form-label">Description:</label><input type="text" id="specimen_${i}_desc" class="form-input" placeholder="e.g., Omentum"></div>
+                    <div class="form-group"><label class="form-label">Size (cm):</label><input type="text" id="specimen_${i}_size" class="form-input" placeholder="e.g., 10x8"></div>`;
+                container.appendChild(block);
+            }
+        }
+    };
+    
+    const toggleEneField = () => {
+        const posNodes = parseInt(document.getElementById('ln_positive').value);
+        document.getElementById('ene_details').classList.toggle('hidden', isNaN(posNodes) || posNodes <= 0);
+    };
+
+    // --- Event Listeners ---
+    form.addEventListener('input', () => { updateStaging(); generateReport(); });
+    document.getElementById('specimen_count').addEventListener('input', updateSpecimenFields);
+    document.getElementById('ln_positive').addEventListener('input', toggleEneField);
+    document.getElementById('tumor_stage_type').addEventListener('change', (e) => {
+        document.getElementById('config_advanced').classList.toggle('hidden', e.target.value !== 'advanced');
+        document.getElementById('config_early').classList.toggle('hidden', e.target.value !== 'early');
+    });
+    ['prox', 'dist', 'rad'].forEach(m => {
+        document.getElementById(`margin_${m}_status`).addEventListener('change', (e) => {
+            document.getElementById(`margin_${m}_dist_div`).classList.toggle('hidden', e.target.value !== 'uninvolved');
+        });
+    });
+    document.getElementById('copyBtn').addEventListener('click', () => {
+        navigator.clipboard.writeText(document.getElementById('reportOutput').textContent).then(() => {
+            const btn = document.getElementById('copyBtn');
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = 'Copy Report', 2000);
+        });
+    });
+
+    // --- Initial Setup ---
+    updateSpecimenFields();
+    updateStaging();
+    toggleEneField();
+    generateReport();
+});
+</script>
+</body>
+</html>
