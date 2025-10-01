@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Breast Cancer Structured Pathology Reporter</title>
+  <style>
+    :root { --primary-start: #667eea; --primary-end: #764ba2; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f4f7f9; min-height: 100vh; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,.1); overflow: hidden; }
+    .header { background: linear-gradient(135deg, var(--primary-start) 0%, var(--primary-end) 100%); color: #fff; padding: 26px; text-align: center; }
+    .header h1 { margin: 0 0 6px; font-size: 24px; }
+    .content { display: grid; grid-template-columns: 1fr 1fr; }
+    .form-section, .preview-section { padding: 24px; max-height: calc(100vh - 180px); overflow-y: auto; }
+    .preview-section { background: #f8f9fa; border-left: 2px solid #e9ecef; }
+    .section-title { font-size: 16px; font-weight: 700; color: var(--primary-start); border-bottom: 2px solid var(--primary-start); padding-bottom: 8px; margin: 24px 0 16px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; color: #333; margin-bottom: 6px; font-weight: 600; }
+    input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: #fff; transition: all .2s; }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary-start); box-shadow: 0 0 0 3px rgba(102,126,234,.15); outline: none; }
+    textarea { min-height: 70px; resize: vertical; }
+    .inline { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+    .report-preview { background: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 18px; font-family: "Courier New", Courier, monospace; font-size: 13px; white-space: pre-wrap; line-height: 1.6; }
+    .button-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+    .btn { cursor: pointer; border: none; border-radius: 6px; padding: 12px; font-weight: 700; color: #fff; background: #6c757d; transition: opacity .2s; }
+    .btn:hover { opacity: 0.85; }
+    .btn.primary { background: linear-gradient(135deg, var(--primary-start) 0%, var(--primary-end) 100%); }
+    .help { color: #6c757d; font-size: 12px; margin-top: 6px; }
+    .subtle { color: #6c757d; font-style: italic; }
+    .rep-row { display: grid; grid-template-columns: 120px 1fr 36px; gap: 8px; margin: 6px 0; }
+    .specimen-row { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .btn.rm { background: #e11d48; font-size: 18px; line-height: 1; }
+    .hidden { display: none; }
+    @media (max-width: 968px) { .content { grid-template-columns: 1fr; } .preview-section { border-left: none; border-top: 2px solid #e9ecef; } }
+    @media print { .form-section, .header { display: none !important; } body { background: #fff; } .preview-section { border: none; } .report-preview { font-size: 12pt; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔬 Breast Cancer Structured Pathology Reporter</h1>
+      <div>Dynamic Interactive Report Generation Tool</div>
+    </div>
+
+    <div class="content">
+      <section class="form-section" id="form">
+        <h2 class="section-title">Basic Information</h2>
+        <div class="form-group">
+          <label for="laterality">Specimen laterality</label>
+          <select id="laterality">
+            <option>Right</option>
+            <option>Left</option>
+            <option>Not specified</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="procedure">Procedure</label>
+          <select id="procedure">
+            <option>Excision with/without image-guided localization</option>
+            <option>Partial mastectomy</option>
+            <option>Total mastectomy (including nipple and skin)</option>
+            <option>Skin-sparing total mastectomy</option>
+            <option>Nipple-sparing total mastectomy</option>
+            <option>Modified radical mastectomy</option>
+            <option value="other">Other (specify)</option>
+          </select>
+          <div id="procedureOtherWrapper" class="hidden" style="margin-top: 8px;">
+            <input id="procedureOther" type="text" placeholder="Specify other procedure" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="lnSampling">Lymph node sampling</label>
+          <select id="lnSampling">
+            <option>sentinel lymph node biopsy</option>
+            <option>Axillary dissection</option>
+            <option value="other">Other lymph nodes (specify)</option>
+          </select>
+          <div id="lnSamplingOtherWrapper" class="hidden" style="margin-top: 8px;">
+            <input id="lnSamplingOther" type="text" placeholder="Specify other LN sampling" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="frozenRef">Previous frozen section report reference</label>
+          <input id="frozenRef" type="text" placeholder="e.g., 2025-S1234" />
+        </div>
+        <div class="form-group">
+          <label for="reference">Reference (optional)</label>
+          <textarea id="reference" placeholder="References, if any"></textarea>
+        </div>
+
+        <h2 class="section-title">Gross Description</h2>
+        <div class="form-group">
+          <label for="containerCount">Specimens are submitted in</label>
+          <input id="containerCount" type="number" min="0" step="1" placeholder="e.g., 2" />
+        </div>
+        <div id="specimenContainer" class="form-group"></div>
+        
+        <div class="form-group">
+          <label>Specimen size</label>
+          <div class="inline">
+            <input id="breastX" type="number" step="0.1" placeholder="Breast L (cm)" />
+            <input id="breastY" type="number" step="0.1" placeholder="Breast W (cm)" />
+            <input id="breastZ" type="number" step="0.1" placeholder="Breast H (cm)" />
+            <input id="skinX" type="number" step="0.1" placeholder="Skin L (cm)" />
+            <input id="skinY" type="number" step="0.1" placeholder="Skin W (cm)" />
+            <input id="axFatX" type="number" step="0.1" placeholder="Axillary fat L (cm)" />
+            <input id="axFatY" type="number" step="0.1" placeholder="Axillary fat W (cm)" />
+            <input id="axFatZ" type="number" step="0.1" placeholder="Axillary fat H (cm)" />
+          </div>
+          <div class="help">Enter numbers only. Blank values will be rendered as underscores.</div>
+        </div>
+        <div class="form-group">
+          <label>Tumor</label>
+          <div class="inline">
+            <input id="tumorSizeX" type="number" step="0.1" placeholder="Tumor L (cm)" />
+            <input id="tumorSizeY" type="number" step="0.1" placeholder="Tumor W (cm)" />
+            <input id="tumorSizeZ" type="number" step="0.1" placeholder="Tumor H (cm)" />
+            <input id="clockPos" type="number" min="1" max="12" step="1" placeholder="O'clock" />
+            <input id="distNipple" type="number" step="0.1" placeholder="Dist to nipple (cm)" />
+            <input id="marginBase" type="number" step="0.1" placeholder="Base margin (cm)" />
+            <input id="marginCirc" type="number" step="0.1" placeholder="Peripheral margin (cm)" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="otherSpecimen">Other specimen (optional)</label>
+          <input id="otherSpecimen" type="text" placeholder="Describe any additional specimen" />
+        </div>
+        <div class="form-group">
+          <label>Representative sections</label>
+          <div id="repRoot"></div>
+          <div class="rep-row">
+            <input id="repCode" type="text" value="RA-RD" />
+            <input id="repDesc" type="text" value="tumor" />
+            <button class="btn rm" type="button" id="addRep">+</button>
+          </div>
+        </div>
+
+        <h2 class="section-title">Microscopic Description</h2>
+        <div class="form-group">
+          <label for="histoType">Histologic type</label>
+          <select id="histoType">
+            <option>Invasive ductal carcinoma</option>
+            <option>Invasive lobular carcinoma</option>
+            <option>Mixed ductal and lobular carcinoma</option>
+            <option>Mucinous carcinoma</option>
+            <option>Tubular carcinoma</option>
+            <option>Medullary carcinoma</option>
+            <option>Papillary carcinoma</option>
+            <option>Metaplastic carcinoma</option>
+            <option value="other">Other (specify)</option>
+          </select>
+          <div id="histoOtherWrapper" class="hidden" style="margin-top: 8px;">
+            <input id="histoOther" type="text" placeholder="Specify other histologic type" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="invasiveSizeMm">Size of invasive carcinoma (mm)</label>
+          <input id="invasiveSizeMm" type="number" step="0.1" />
+        </div>
+        <div class="form-group">
+          <label>Nottingham histologic score</label>
+          <div class="inline">
+            <select id="tubuleScore">
+              <option value="1">Tubule formation: 1 (>75%)</option>
+              <option value="2" selected>Tubule formation: 2 (10–75%)</option>
+              <option value="3">Tubule formation: 3 (<10%)</option>
+            </select>
+            <select id="nuclearScore">
+              <option value="1">Nuclear pleomorphism: 1 (small)</option>
+              <option value="2" selected>Nuclear pleomorphism: 2 (moderate)</option>
+              <option value="3">Nuclear pleomorphism: 3 (marked)</option>
+            </select>
+            <select id="mitoticScore">
+              <option value="1">Mitotic count: 1 (0–3/mm²)</option>
+              <option value="2" selected>Mitotic count: 2 (4–7/mm²)</option>
+              <option value="3">Mitotic count: 3 (≥8/mm²)</option>
+            </select>
+          </div>
+          <div class="inline" style="margin-top:8px;">
+            <input id="nottinghamTotal" type="text" placeholder="Total Score" readonly />
+            <input id="grade" type="text" placeholder="Grade" readonly />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="eic">Extensive intraductal component</label>
+          <select id="eic">
+            <option>absent</option>
+            <option>present, comedo type</option>
+            <option>present, non-comedo type</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="lvi">Peritumor lymphatic/vascular invasion</label>
+          <select id="lvi">
+            <option>not identified</option>
+            <option>present</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="marginStatus">Margins of Excision</label>
+          <select id="marginStatus">
+            <option value="negative">Negative</option>
+            <option value="positive">Positive</option>
+          </select>
+          <div class="inline" style="margin-top:8px;">
+            <input id="marginDistanceMm" type="number" step="0.1" placeholder="Closest distance (mm)" />
+            <input id="marginWhich" type="text" placeholder="Which margin" />
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="skinInvolve">Skin involvement</label>
+          <select id="skinInvolve">
+              <option>Absent</option>
+              <option>Present (without ulceration)</option>
+              <option>Present (with ulceration)</option>
+              <option>Macroscopically satellite skin foci</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="chestWall">Chest wall invasion</label>
+          <select id="chestWall">
+              <option>Absent</option>
+              <option>Present</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="nippleStatus">Nipple</label>
+          <select id="nippleStatus">
+              <option>not included in specimen</option>
+              <option>free</option>
+              <option>invasive</option>
+              <option>dermal lymphatic</option>
+              <option>DCIS</option>
+              <option>Paget's disease</option>
+          </select>
+        </div>
+        
+        <h2 class="section-title">Lymph Node Status</h2>
+        <div class="form-group">
+          <label for="lnStatus">Lymph node status</label>
+          <select id="lnStatus">
+            <option>Negative for metastasis</option>
+            <option>Positive for metastasis</option>
+          </select>
+        </div>
+        <div class="inline">
+          <input id="lnExamined" type="number" min="0" step="1" placeholder="No. examined" />
+          <input id="lnMacro" type="number" min="0" step="1" placeholder=">2 mm (macro)" />
+          <input id="lnMicro" type="number" min="0" step="1" placeholder=">0.2–2 mm (micro)" />
+          <input id="lnITC" type="number" min="0" step="1" placeholder="<0.2 mm (ITC)" />
+          <select id="extranodal">
+            <option value="Absent">Extranodal: Absent</option>
+            <option value="Present">Extranodal: Present</option>
+          </select>
+        </div>
+
+        <h2 class="section-title">Immunohistochemical Study</h2>
+        <div class="form-group">
+          <label for="ihcSection">Performed on the section</label>
+          <input id="ihcSection" type="text" placeholder="e.g., RA-02" />
+        </div>
+        <div class="form-group">
+          <label>1. ER (Leica, clone 6F11)</label>
+          <div class="inline">
+            <select id="erStatus">
+              <option>Positive</option>
+              <option>Low positive</option>
+              <option>Negative</option>
+            </select>
+            <input id="erPercent" type="number" min="0" max="100" step="1" placeholder="%" />
+            <select id="erIntensity">
+              <option>weak</option>
+              <option>moderate</option>
+              <option>strong</option>
+            </select>
+            <select id="erIC">
+              <option>positive</option>
+              <option>negative</option>
+              <option>absent</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>2. PR (Novocastra, clone 16)</label>
+          <div class="inline">
+            <select id="prStatus">
+              <option>Positive</option>
+              <option>Negative</option>
+            </select>
+            <input id="prPercent" type="number" min="0" max="100" step="1" placeholder="%" />
+            <select id="prIntensity">
+              <option>weak</option>
+              <option>moderate</option>
+              <option>strong</option>
+            </select>
+            <select id="prIC">
+              <option>positive</option>
+              <option>negative</option>
+              <option>absent</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="her2">3. HER-2/Neu (Zytomed, clone SP3)</label>
+          <select id="her2">
+            <option>Positive (score 3+)</option>
+            <option>Equivocal (score 2+)</option>
+            <option>Negative (score 1+)</option>
+            <option>Negative (0)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="ki67">4. Ki-67 index (Dako, clone MIB-1)</label>
+          <input id="ki67" type="number" min="0" max="100" step="1" placeholder="%" />
+        </div>
+
+        <h2 class="section-title">Other & Treatment Effect</h2>
+        <div class="form-group">
+          <label for="otherLesion">Other significant lesion</label>
+          <input id="otherLesion" type="text" placeholder="e.g., atypical ductal hyperplasia" />
+        </div>
+        <div class="form-group">
+          <label for="txBreast">Treatment effect — Breast</label>
+          <select id="txBreast">
+            <option>Not applicable</option>
+            <option>No definite response to presurgical therapy in the invasive carcinoma</option>
+            <option>Probable or definite response to presurgical therapy in the invasive carcinoma</option>
+            <option>No residual invasive carcinoma is present in the breast after presurgical therapy</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="txNodes">Treatment effect — Lymph nodes</label>
+          <select id="txNodes">
+            <option>Not applicable</option>
+            <option>No lymph nodes removed</option>
+            <option>No definite response to presurgical therapy in metastatic carcinoma</option>
+            <option>Probable or definite response to presurgical therapy in metastatic carcinoma</option>
+            <option>No lymph node metastases and with fibrous scarring</option>
+            <option>No lymph node metastases and no prominent fibrous scarring</option>
+          </select>
+        </div>
+
+        <div class="button-group">
+          <button class="btn primary" id="btnCopy">Copy Report</button>
+          <button class="btn" id="btnDownload">Download .txt</button>
+          <button class="btn rm" id="btnClear">Clear Form</button>
+        </div>
+      </section>
+
+      <section class="preview-section">
+        <h2 class="section-title">Report Preview</h2>
+        <div id="preview" class="report-preview"><p class="subtle">Fill in the form to generate the report...</p></div>
+      </section>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const $ = (s, el=document) => el.querySelector(s);
+  const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
+  const SKEY = 'breastReporter@v5'; // Incremented version
+
+  // --- UTILS ---
+  const nz = (v, placeholder='__') => (v !== undefined && v !== null && String(v).trim() !== '') ? String(v).trim() : placeholder;
+  function toggle(el, show) {
+    if (el) {
+      el.classList.toggle('hidden', !show);
+      if (!show) $$('input, select', el).forEach(i => i.value = '');
+    }
+  }
+  function flash(sel, txt) {
+    const btn = $(sel);
+    if (!btn) return;
+    const originalText = btn.textContent;
+    const originalBg = btn.style.background;
+    btn.textContent = txt;
+    btn.style.background = '#16a34a';
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = originalBg;
+    }, 1500);
+  }
+
+  // --- DATA & STATE ---
+  function serialize() {
+    const data = {};
+    $$('input, select, textarea').forEach(el => {
+      if (el.id) data[el.id] = el.value;
+    });
+    data.reps = [
+      { code: $('#repCode').value, desc: $('#repDesc').value },
+      ...$$('#repRoot .rep-row').map(row => ({
+        code: $('.rep-code', row).value,
+        desc: $('.rep-desc', row).value
+      }))
+    ];
+    // *** NEW: Serialize dynamic specimen fields ***
+    data.specimens = $$('.specimen-desc').map(el => el.value);
+    return data;
+  }
+  function applyState(data) {
+    if (!data) return;
+    Object.entries(data).forEach(([k, v]) => {
+      const el = $('#' + k);
+      if (el && (el.tagName === 'SELECT' || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+        el.value = v;
+      }
+    });
+    // *** NEW: Apply dynamic specimen fields ***
+    if (data.specimens && data.specimens.length > 0) {
+        updateSpecimenInputs(); // create the fields first
+        const fields = $$('.specimen-desc');
+        data.specimens.forEach((val, i) => {
+            if(fields[i]) fields[i].value = val;
+        });
+    }
+    // apply reps
+    if (data.reps && data.reps.length > 1) {
+      $('#repRoot').innerHTML = '';
+      data.reps.slice(1).forEach(r => addRepRow(r.code, r.desc));
+    }
+  }
+  function save() {
+    try {
+      localStorage.setItem(SKEY, JSON.stringify(serialize()));
+    } catch (e) {
+      console.error("Failed to save state:", e);
+    }
+  }
+  function load() {
+    try {
+      const s = localStorage.getItem(SKEY);
+      return s ? JSON.parse(s) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  // --- DYNAMIC UI ---
+  // *** NEW: Function to manage dynamic specimen inputs ***
+  function updateSpecimenInputs() {
+    const count = parseInt($('#containerCount').value, 10) || 0;
+    const container = $('#specimenContainer');
+    container.innerHTML = ''; // Clear previous fields
+    
+    if (count > 0) {
+        const label = document.createElement('label');
+        label.textContent = 'Specimen description';
+        container.appendChild(label);
+    }
+
+    for (let i = 1; i <= count; i++) {
+        const row = document.createElement('div');
+        row.className = 'specimen-row';
+        row.innerHTML = `
+            <label for="specimen-desc-${i}">#${i}</label>
+            <input type="text" id="specimen-desc-${i}" class="specimen-desc" placeholder="e.g., Breast, right, total mastectomy">
+        `;
+        container.appendChild(row);
+    }
+    $$('.specimen-desc').forEach(el => el.addEventListener('input', update));
+  }
+
+  function addRepRow(code = '', desc = '') {
+    const row = document.createElement('div');
+    row.className = 'rep-row';
+    row.innerHTML = `
+      <input class="rep-code" type="text" placeholder="e.g., RE" value="${code}" />
+      <input class="rep-desc" type="text" placeholder="e.g., resection margin" value="${desc}" />
+      <button class="btn rm del" type="button">×</button>`;
+    $('#repRoot').appendChild(row);
+    row.querySelector('.del').addEventListener('click', () => {
+      row.remove();
+      update();
+    });
+    $$('input', row).forEach(el => el.addEventListener('input', update));
+  }
+  function updateConditionalInputs() {
+    const d = serialize();
+    toggle($('#procedureOtherWrapper'), d.procedure === 'other');
+    toggle($('#lnSamplingOtherWrapper'), d.lnSampling === 'other');
+    toggle($('#histoOtherWrapper'), d.histoType === 'other');
+  }
+  function updateNottinghamScore() {
+    const tubule = parseInt($('#tubuleScore').value, 10);
+    const nuclear = parseInt($('#nuclearScore').value, 10);
+    const mitotic = parseInt($('#mitoticScore').value, 10);
+    const total = tubule + nuclear + mitotic;
+    $('#nottinghamTotal').value = `Total score: ${total}`;
+
+    let grade = '';
+    if (total >= 3 && total <= 5) grade = 'Grade I (score 3-5)';
+    else if (total >= 6 && total <= 7) grade = 'Grade II (score 6,7)';
+    else if (total >= 8 && total <= 9) grade = 'Grade III (score 8,9)';
+    $('#grade').value = grade;
+  }
+
+  // --- REPORT GENERATION ---
+  function getStaging(d) {
+    const sizeMm = parseFloat(d.invasiveSizeMm);
+    const T = (() => {
+      if (!isFinite(sizeMm)) return 'X';
+      if (d.skinInvolve.startsWith('Present') || d.chestWall === 'Present') return '4';
+      if (sizeMm > 50) return '3';
+      if (sizeMm > 20) return '2';
+      if (sizeMm > 0) return '1';
+      return 'is';
+    })();
+
+    const macro = parseInt(d.lnMacro, 10) || 0;
+    const micro = parseInt(d.lnMicro, 10) || 0;
+    const itc = parseInt(d.lnITC, 10) || 0;
+    const totalPositiveNodes = macro + micro;
+    const N = (() => {
+      if (d.lnStatus === 'Negative for metastasis') return itc > 0 ? '0(i+)' : '0';
+      if (totalPositiveNodes >= 10) return '3';
+      if (totalPositiveNodes >= 4) return '2';
+      if (totalPositiveNodes >= 1) return '1';
+      return 'X';
+    })();
+    
+    const lnSum = d.lnStatus === 'Negative for metastasis' ? `0 / ${nz(d.lnExamined)}` : `${totalPositiveNodes} / ${nz(d.lnExamined)}`;
+    return { T, N, lnSum };
+  }
+
+  function render() {
+    const d = serialize();
+    const { T, N, lnSum } = getStaging(d);
+
+    const get = (id) => nz(d[id]);
+    const proc = d.procedure === 'other' ? get('procedureOther') : d.procedure;
+    const lnSamp = d.lnSampling === 'other' ? get('lnSamplingOther') : d.lnSampling;
+    const histo = d.histoType === 'other' ? get('histoOther') : d.histoType;
+    
+    const diagnosis = `Invasive ductal carcinoma (T${T}) with regional lymph node status (${lnSum}, N${N}), ${d.laterality.toLowerCase()} breast, ${proc} and ${lnSamp}`;
+
+    // *** NEW: Render dynamic specimen list ***
+    const specimenList = d.specimens.map((desc, i) => `#${i + 1} ${desc}`).join('\n');
+
+    const gross = `
+Specimens are submitted in ${get('containerCount')} labeled containers.
+${specimenList}
+
+1. Procedure:
+   ${proc}
+
+2. Lymph node sampling:
+   ${lnSamp}
+
+3. Specimen laterality:
+   ${d.laterality}
+
+4. Specimen size:
+   - Breast: ${get('breastX')} x ${get('breastY')} x ${get('breastZ')} cm.
+   - Skin: ${get('skinX')} x ${get('skinY')} cm
+   - Axillary fat: ${get('axFatX')} x ${get('axFatY')} x ${get('axFatZ')} cm.
+
+5. Tumor:
+   - Size: ${get('tumorSizeX')} x ${get('tumorSizeY')} x ${get('tumorSizeZ')} cm
+   - Location: ${get('clockPos')} o'clock direction, ${get('distNipple')} cm to the nipple.
+   - Margin: ${get('marginBase')} cm from the base; ${get('marginCirc')} cm from the nearest peripheral (circumferential) margin
+
+6. Other specimen:
+   ${d.otherSpecimen || ''}
+`.trim();
+
+    const reps = d.reps
+      .filter(r => (r.code||'').trim() || (r.desc||'').trim())
+      .map(r => `${nz(r.code, ' ')}: ${nz(r.desc, ' ')}`).join('\n');
+    
+    const marginText = d.marginStatus === 'negative'
+        ? `- Negative, closest margin (${get('marginDistanceMm', '_______')} mm from ${get('marginWhich', '_______')} margin)`
+        : `- Positive (${get('marginWhich', '_______')} margin)`;
+
+    const micro = `
+1. Histologic type: ${histo}
+
+2. Size of invasive carcinoma (mm): ${get('invasiveSizeMm')}
+
+3. Histologic grade (Nottingham histologic score):
+   ${d.grade}
+   - Tubule formation: score ${d.tubuleScore.charAt(0)}
+   - Nuclear pleomorphism: score ${d.nuclearScore.charAt(0)}
+   - Mitotic count: score ${d.mitoticScore.charAt(0)}
+
+4. Extensive intraductal component: ${d.eic}
+
+5. Peritumor lymphatic/vascular invasion: ${d.lvi}
+
+6. Margins of Excision:
+   ${marginText}
+
+7. Extent of tumor
+   - Skin involvement: ${d.skinInvolve}
+   - Chest wall invasion deeper than pectoralis muscle: ${d.chestWall}
+
+8. Nipple: ${d.nippleStatus}
+
+9. Lymph node status: ${d.lnStatus}
+   - Extranodal extension: ${d.extranodal}
+   - No. examined: ${get('lnExamined')}
+   - No. macrometastases (>2 mm): ${get('lnMacro')}
+   - No. micrometastases (>0.2 ~ 2 mm and/or >200 cells): ${get('lnMicro')}
+   - No. isolated tumor cells (<0.2 mm and <200 cells): ${get('lnITC')}
+
+10. Other significant lesion: ${d.otherLesion || ''}
+
+11. Treatment Effect: Response to presurgical (neoadjuvant) therapy
+    - In the Breast:
+      ${d.txBreast}
+    - In the Lymph nodes
+      ${d.txNodes}
+`.trim();
+
+    const ihc = `
+1. ER (Leica, clone 6F11): ${d.erStatus}${d.erPercent ? ` (${d.erPercent}%, ${d.erIntensity} nuclear stainings)` : ''} (Internal control: ${d.erIC})
+2. PR (Novocastra, clone 16): ${d.prStatus}${d.prPercent ? ` (${d.prPercent}%, ${d.prIntensity} nuclear stainings)` : ''} (Internal control: ${d.prIC})
+3. HER-2/Neu (Zytomed, clone SP3): ${d.her2}
+4. Ki-67 index (Dako, clone MIB-1): ${d.ki67 ? d.ki67 + '%' : ''}
+`.trim();
+
+    const reportSections = [
+        'Breast Cancer Structured Pathology Reporting\n',
+        'DIAGNOSIS:',
+        diagnosis,
+        d.frozenRef ? `\nNOTE:\nThe pathologic findings of the sentinel lymph node status in the previous frozen section report [${d.frozenRef}] have been compiled into this report.` : '',
+        d.reference ? `\nREFERENCE:\n${d.reference}` : '',
+        '\nGROSS DESCRIPTION:',
+        gross,
+        reps ? `\nRepresentative sections are labeled as:\n${reps}` : '',
+        '\nMICROSCOPIC DESCRIPTION:',
+        micro,
+        `\nIMMUNOHISTOCHEMICAL STUDY: (performed on the section ${get('ihcSection', '--')})`,
+        ihc
+    ];
+
+    $('#preview').textContent = reportSections.filter(Boolean).join('\n\n').replace(/\n\n\n/g, '\n\n');
+  }
+  
+  // --- MAIN ---
+  function update() {
+    updateConditionalInputs();
+    updateNottinghamScore();
+    render();
+    save();
+  }
+
+  function init() {
+    // Event listeners
+    $$('input, select, textarea').forEach(el => {
+        if (el.id !== 'containerCount') el.addEventListener('input', update);
+    });
+    // *** NEW: Listener for container count ***
+    $('#containerCount').addEventListener('input', () => {
+        updateSpecimenInputs();
+        update();
+    });
+
+    $('#addRep').addEventListener('click', () => addRepRow());
+    $('#btnCopy').addEventListener('click', () => {
+        const text = $('#preview').textContent;
+        if (!text.trim() || text.includes('Fill in the form')) return;
+        navigator.clipboard.writeText(text).then(() => flash('#btnCopy', 'Copied!'), () => alert('Copy failed'));
+    });
+    $('#btnDownload').addEventListener('click', () => {
+        const text = $('#preview').textContent;
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'breast_structured_report.txt';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    });
+    $('#btnClear').addEventListener('click', () => {
+        if (!confirm('Are you sure you want to clear all fields?')) return;
+        localStorage.removeItem(SKEY);
+        window.location.reload();
+    });
+
+    // Initial load
+    const savedState = load();
+    if (savedState) applyState(savedState);
+    
+    if (!savedState || !savedState.reps || savedState.reps.length <= 1) {
+      addRepRow('RE', 'resection margin');
+      addRepRow('RF', 'nipple');
+      addRepRow('RG', 'lymph node');
+    }
+    
+    update();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
