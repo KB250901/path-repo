@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Renal Cell Carcinoma Pathology Reporter</title>
+<style>
+/* ------------- GLOBAL STYLES ------------- */
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Segoe UI',Tahoma,sans-serif;
+  background:linear-gradient(135deg,#fa709a 0%,#fee140 100%);
+  min-height:100vh;padding:20px;color:#333
+}
+.container{
+  max-width:1160px;margin:auto;background:#fff;border-radius:12px;
+  box-shadow:0 10px 40px rgba(0,0,0,.15);overflow:hidden;display:flex;flex-direction:column
+}
+header{
+  background:linear-gradient(135deg,#fa709a 0%,#fee140 100%);
+  color:#fff;padding:30px;text-align:center
+}
+main{display:grid;grid-template-columns:1fr 1fr;min-height:75vh}
+section{padding:28px;overflow-y:auto}
+.form-section{border-right:2px solid #e9ecef}
+.preview-section{
+  background:#f8f9fa;border-left:2px solid #e9ecef;
+  font:13px/1.6 "Courier New",monospace;white-space:pre-wrap
+}
+h2.section-title{
+  font:600 18px/1 'Segoe UI';color:#fa709a;margin:0 0 20px;
+  border-bottom:2px solid #fa709a;padding-bottom:6px
+}
+.form-group{margin-bottom:18px}
+label{display:block;font:600 14px/1 'Segoe UI';margin-bottom:6px}
+input[type=text],input[type=number],select,textarea{
+  width:100%;padding:10px 12px;font:14px/1 'Segoe UI';
+  border:1px solid #ccc;border-radius:6px;transition:.3s
+}
+input:focus,select:focus,textarea:focus{
+  border-color:#fa709a;box-shadow:0 0 0 3px rgba(250,112,154,.25);outline:0
+}
+textarea{min-height:80px;resize:vertical}
+.radio-group,.checkbox-group{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.radio-group label,.checkbox-group label{font-weight:400;font-size:14px;cursor:pointer}
+.inline-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(95px,1fr));gap:10px}
+.triple-input{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.button-group{display:flex;gap:12px;margin-top:24px}
+button{flex:1;padding:12px 20px;border:0;border-radius:6px;font:700 15px/1 'Segoe UI';cursor:pointer;transition:.3s}
+button.primary{background:linear-gradient(135deg,#fa709a 0%,#fee140 100%);color:#fff}
+button.primary:hover{box-shadow:0 4px 12px rgba(250,112,154,.5);transform:translateY(-2px)}
+button.secondary{background:#6c757d;color:#fff}
+button.secondary:hover{background:#555a60}
+.help-text{font-size:12px;color:#6c757d;margin-top:4px}
+/* responsive */
+@media(max-width:960px){
+  main{grid-template-columns:1fr}
+  .form-section{border-right:0;border-bottom:2px solid #e9ecef}
+  .preview-section{border-left:0;border-top:2px solid #e9ecef;min-height:220px;padding-top:20px}
+}
+</style>
+</head>
+<body>
+<div class="container" role="main">
+  <header>
+    <h1>🔬 Renal Cell Carcinoma Structured Pathology Reporter</h1>
+    <p>Dynamic interactive report-generation tool</p>
+  </header>
+
+  <main>
+    <!-- -------- FORM COLUMN -------- -->
+    <section class="form-section" aria-label="Data entry form">
+      <h2 class="section-title">Basic Information</h2>
+
+      <div class="form-group">
+        <label>Laterality *</label>
+        <div class="radio-group" role="radiogroup">
+          <label><input type="radio" name="laterality" value="right" checked> Right</label>
+          <label><input type="radio" name="laterality" value="left"> Left</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="procedure">Procedure *</label>
+        <select id="procedure">
+          <option value="partial nephrectomy">Partial nephrectomy</option>
+          <option value="total (simple) nephrectomy">Total (simple) nephrectomy</option>
+          <option value="radical nephrectomy">Radical nephrectomy</option>
+          <option value="radical nephroureterectomy">Radical nephroureterectomy</option>
+          <option value="other">Other (specify below)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="procedureOther">Other Procedure (optional)</label>
+        <input type="text" id="procedureOther" placeholder="Specify other procedure">
+      </div>
+
+      <!-- -------- Specimens -------- -->
+      <h2 class="section-title">Specimens</h2>
+
+      <div class="form-group">
+        <label for="numContainers">Number of labeled containers</label>
+        <input type="number" id="numContainers" placeholder="e.g. 4" min="0" step="1">
+      </div>
+
+      <div class="form-group">
+        <label for="spec1Label">Specimen #1 Label</label>
+        <input type="text" id="spec1Label" value="Kidney" placeholder="e.g., Kidney, left">
+      </div>
+
+      <div class="form-group">
+        <label for="spec2Label">Specimen #2 (optional)</label>
+        <input type="text" id="spec2Label" placeholder="e.g., Hilar lymph node, right">
+      </div>
+
+      <div class="form-group">
+        <label for="specAdditional">Additional Specimens (optional)</label>
+        <textarea id="specAdditional" placeholder="List any additional specimens (#3, #4, etc.)"></textarea>
+      </div>
+
+      <!-- -------- Gross description -------- -->
+      <h2 class="section-title">Gross Description</h2>
+
+      <div class="form-group">
+        <label for="specimenSize">Specimen Size (Kidney + Fat) (cm)</label>
+        <input type="text" id="specimenSize" placeholder="e.g., 12 × 8 × 5">
+      </div>
+
+      <div class="form-group">
+        <label for="specimenWeight">Specimen Weight (Kidney + Fat) (g)</label>
+        <input type="number" id="specimenWeight" step="0.1">
+      </div>
+
+      <div class="form-group">
+        <label>Kidney Size (cm)</label>
+        <div class="triple-input">
+          <input type="number" id="kidneyX" placeholder="L" step="0.1">
+          <input type="number" id="kidneyY" placeholder="W" step="0.1">
+          <input type="number" id="kidneyZ" placeholder="H" step="0.1">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="kidneyWeight">Kidney Weight (g)</label>
+        <input type="number" id="kidneyWeight" step="0.1">
+      </div>
+
+      <div class="form-group">
+        <label>Ureter</label>
+        <div class="radio-group" role="radiogroup">
+          <label><input type="radio" name="ureter" value="not included" checked> Not included</label>
+          <label><input type="radio" name="ureter" value="included"> Included</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="ureterFields" style="display:none">
+        <div class="inline-inputs">
+          <input type="number" id="ureterLength" placeholder="Length (cm)" step="0.1">
+          <input type="number" id="ureterDiameter" placeholder="Diameter (cm)" step="0.1">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Adrenal Gland</label>
+        <div class="radio-group" role="radiogroup">
+          <label><input type="radio" name="adrenal" value="not included" checked> Not included</label>
+          <label><input type="radio" name="adrenal" value="included"> Included</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="adrenalFields" style="display:none">
+        <div class="triple-input">
+          <input type="number" id="adrenalX" placeholder="L" step="0.1">
+          <input type="number" id="adrenalY" placeholder="W" step="0.1">
+          <input type="number" id="adrenalZ" placeholder="H" step="0.1">
+        </div>
+        <input type="number" id="adrenalWeight" placeholder="Weight (g)" step="0.1" style="margin-top:10px">
+      </div>
+
+      <div class="form-group">
+        <label>Tumor Size (cm) *</label>
+        <div class="triple-input">
+          <input type="number" id="tumorX" placeholder="L" step="0.1">
+          <input type="number" id="tumorY" placeholder="W" step="0.1">
+          <input type="number" id="tumorZ" placeholder="H" step="0.1">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="tumorSite">Tumor Site *</label>
+        <select id="tumorSite">
+          <option value="Upper pole">Upper pole</option>
+          <option value="Middle pole">Middle pole</option>
+          <option value="Lower pole">Lower pole</option>
+          <option value="Multiple sites">Multiple sites</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Tumor Focality *</label>
+        <div class="radio-group" role="radiogroup">
+          <label><input type="radio" name="focality" value="Unifocal" checked> Unifocal</label>
+          <label><input type="radio" name="focality" value="Multifocal"> Multifocal</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Tumor Extent (check all that apply)</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="extentKidney" checked> Limited to kidney</label>
+          <label><input type="checkbox" id="extentPerinephric"> Beyond capsule (perinephric fat)</label>
+          <label><input type="checkbox" id="extentSinus"> Renal sinus</label>
+          <label><input type="checkbox" id="extentPelvicalyceal"> Pelvicalyceal system</label>
+          <label><input type="checkbox" id="extentVein"> Renal vein/branches</label>
+          <label><input type="checkbox" id="extentGerota"> Beyond Gerota’s fascia</label>
+          <label><input type="checkbox" id="extentAdrenal"> Direct adrenal invasion</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="sections">Representative Sections</label>
+        <textarea id="sections" placeholder="e.g., RA–RD: tumor + renal tissue&#10;RE: renal vein&#10;RF: renal pelvis"></textarea>
+      </div>
+
+      <!-- -------- Microscopic -------- -->
+      <h2 class="section-title">Microscopic Description</h2>
+
+      <div class="form-group">
+        <label for="histoType">Histological Type *</label>
+        <select id="histoType">
+          <option value="Clear cell renal cell carcinoma">Clear-cell RCC</option>
+          <option value="Papillary renal cell carcinoma">Papillary RCC</option>
+          <option value="Chromophobe renal cell carcinoma">Chromophobe RCC</option>
+          <option value="Collecting duct carcinoma">Collecting-duct carcinoma</option>
+          <option value="Renal medullary carcinoma">Renal medullary carcinoma</option>
+          <option value="MiT family translocation carcinomas">MiT-family translocation carcinomas</option>
+          <option value="Succinate dehydrogenase-deficient renal cell carcinoma">SDH-deficient RCC</option>
+          <option value="Mucinous tubular and spindle cell carcinoma">Mucinous tubular & spindle cell carcinoma</option>
+          <option value="Tubulocystic renal cell carcinoma">Tubulocystic RCC</option>
+          <option value="Acquired cystic disease-associated renal cell carcinoma">ACD-associated RCC</option>
+          <option value="Clear cell papillary renal cell carcinoma">Clear-cell papillary RCC</option>
+          <option value="Unclassified renal cell carcinoma">Unclassified RCC</option>
+          <option value="Other">Other (specify below)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="histoTypeOther">Other Type (optional)</label>
+        <input type="text" id="histoTypeOther" placeholder="Specify other type">
+      </div>
+
+      <div class="form-group">
+        <label>Histological Grade (WHO/ISUP) *</label>
+        <div class="radio-group" role="radiogroup">
+          <label><input type="radio" name="grade" value="G1"> G1 – nucleoli inconspicuous @400×</label>
+          <label><input type="radio" name="grade" value="G2"> G2 – nucleoli conspicuous @400×</label>
+          <label><input type="radio" name="grade" value="G3"> G3 – nucleoli conspicuous @100×</label>
+          <label><input type="radio" name="grade" value="G4"> G4 – pleomorphism/rhabdoid/sarcomatoid</label>
+          <label><input type="radio" name="grade" value="GX"> GX – cannot be assessed</label>
+          <label><input type="radio" name="grade" value="NA"> Not applicable</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="g4Details" style="display:none">
+        <label for="g4Text" class="indent-field">G4 Features (optional)</label>
+        <input type="text" id="g4Text" placeholder="Specify features">
+      </div>
+
+      <div class="form-group" id="naDetails" style="display:none">
+        <label for="naText" class="indent-field">Not-Applicable Reason (optional)</label>
+        <input type="text" id="naText" placeholder="Specify reason">
+      </div>
+
+      <div class="form-group">
+        <label>Microscopic Tumor Size (cm)</label>
+        <div class="triple-input">
+          <input type="number" id="microTumorX" placeholder="L" step="0.1">
+          <input type="number" id="microTumorY" placeholder="W" step="0.1">
+          <input type="number" id="microTumorZ" placeholder="H" step="0.1">
+        </div>
+        <div class="help-text">Leave blank to reuse gross tumor size</div>
+      </div>
+
+      <div class="form-group">
+        <label for="tStage">Tumor Staging (AJCC 8th) *</label>
+        <select id="tStage">
+          <option value="">-- Select T Stage --</option>
+          <option value="pT0">pT0 – no primary tumor</option>
+          <option value="pT1a">pT1a – ≤4 cm, limited to kidney</option>
+          <option value="pT1b">pT1b – >4 ≤7 cm, limited to kidney</option>
+          <option value="pT1">pT1 – ≤7 cm, limited (sub-undetermined)</option>
+          <option value="pT2a">pT2a – >7 ≤10 cm, limited to kidney</option>
+          <option value="pT2b">pT2b – >10 cm, limited to kidney</option>
+          <option value="pT2">pT2 – >7 cm, limited (sub-undetermined)</option>
+          <option value="pT3a">pT3a – renal vein/sinus fat</option>
+          <option value="pT3b">pT3b – IVC below diaphragm</option>
+          <option value="pT3c">pT3c – IVC above diaphragm/wall invasion</option>
+          <option value="pT3">pT3 – major veins/perinephric tissues (undetermined)</option>
+          <option value="pT4">pT4 – beyond Gerota’s fascia/adrenal</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Regional Lymph Nodes (pN) *</label>
+        <div class="radio-group" role="radiogroup">
+          <label><input type="radio" name="nStage" value="pNX-no nodes" checked> pN X – none submitted</label>
+          <label><input type="radio" name="nStage" value="pNX-cannot determine"> pN X – cannot determine</label>
+          <label><input type="radio" name="nStage" value="pN0"> pN0 – no metastasis</label>
+          <label><input type="radio" name="nStage" value="pN1"> pN1 – regional node metastasis</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="lnDetails" style="display:none">
+        <label for="lnPositive">Lymph Node Details</label>
+        <div class="inline-inputs">
+          <input type="number" id="lnPositive" placeholder="Positive" min="0">
+          <input type="number" id="lnTotal" placeholder="Total" min="0">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Resection Margin *</label>
+        <div class="radio-group" role="radiogroup">
+          <label><input type="radio" name="margin" value="Uninvolved" checked> Uninvolved</label>
+          <label><input type="radio" name="margin" value="Involved"> Involved</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="marginDistance">Nearest Margin Distance (cm, optional)</label>
+        <input type="number" id="marginDistance" step="0.1" min="0">
+      </div>
+
+      <div class="form-group">
+        <label>Lymphovascular Invasion *</label>
+        <div class="radio-group" role="radiogroup">
+          <label><input type="radio" name="lvi" value="Not identified" checked> Not identified</label>
+          <label><input type="radio" name="lvi" value="Present"> Present</label>
+        </div>
+        <div class="help-text">Excludes renal vein/IVC</div>
+      </div>
+
+      <div class="form-group">
+        <label>Tumor Necrosis *</label>
+        <div class="radio-group" role="radiogroup">
+          <label><input type="radio" name="necrosis" value="Not identified" checked> Not identified</label>
+          <label><input type="radio" name="necrosis" value="Present"> Present</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="nonNeoplastic">Non-neoplastic Kidney (optional)</label>
+        <textarea id="nonNeoplastic" placeholder="e.g., diabetic nephropathy"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="additional">Additional Findings (optional)</label>
+        <textarea id="additional" placeholder="e.g., oncocytoma, cysts"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="ihc">Immunohistochemistry (optional)</label>
+        <textarea id="ihc" placeholder="e.g., PAX8+, CD10+, CK7–"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="ihcSection">IHC Section No. (optional)</label>
+        <input type="text" id="ihcSection" placeholder="e.g., Section RA-1">
+      </div>
+
+      <!-- Buttons -->
+      <div class="button-group">
+        <button type="button" class="primary" id="btnGenerate">Generate Report</button>
+        <button type="button" class="secondary" id="btnCopy">Copy to Clipboard</button>
+        <button type="button" class="secondary" id="btnClear">Clear Form</button>
+      </div>
+    </section>
+
+    <!-- -------- PREVIEW COLUMN -------- -->
+    <section class="preview-section" aria-label="Report preview">
+      <h2 class="section-title">Report Preview</h2>
+      <div id="reportPreview" aria-live="polite" aria-atomic="true" style="min-height:300px;color:#6c757d">
+        Fill in the form and click “Generate Report” …
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- -------- SCRIPT -------- -->
+<script>
+/* element helpers */
+const $ = id => document.getElementById(id);
+const q = sel => document.querySelector(sel);
+const qa = sel => document.querySelectorAll(sel);
+
+/* show/hide conditional blocks */
+function toggleConditional(){
+  $('procedureOther').style.display = $('procedure').value === 'other' ? 'block' : 'none';
+  $('ureterFields').style.display = q('input[name="ureter"]:checked').value === 'included' ? 'block' : 'none';
+  $('adrenalFields').style.display = q('input[name="adrenal"]:checked').value === 'included' ? 'block' : 'none';
+  $('g4Details').style.display = q('input[name="grade"][value="G4"]').checked ? 'block' : 'none';
+  $('naDetails').style.display = q('input[name="grade"][value="NA"]').checked ? 'block' : 'none';
+  const n = q('input[name="nStage"]:checked').value;
+  $('lnDetails').style.display = (n === 'pN0' || n === 'pN1') ? 'flex' : 'none';
+}
+
+/* localStorage */
+function saveForm(){
+  const data = {};
+  qa('.form-section input, .form-section select, .form-section textarea')
+    .forEach(el=>{
+      if(el.type === 'radio'){ if(el.checked) data[el.name] = el.value; }
+      else if(el.type === 'checkbox'){ data[el.id] = el.checked; }
+      else{ data[el.id || el.name] = el.value; }
+    });
+  localStorage.setItem('rccReporterData', JSON.stringify(data));
+}
+function loadForm(){
+  const s = localStorage.getItem('rccReporterData'); if(!s) return;
+  try{
+    const d = JSON.parse(s);
+    Object.keys(d).forEach(k=>{
+      const el = $(k) || q(`[name="${k}"]`);
+      if(!el) return;
+      if(el.type === 'radio'){
+        const r = q(`input[name="${k}"][value="${d[k]}"]`); if(r) r.checked = true;
+      }else if(el.type === 'checkbox'){ el.checked = !!d[k]; }
+      else el.value = d[k];
+    });
+  }catch(e){ console.warn('load error', e); }
+}
+
+/* tiny helpers */
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const lateralityCap = () => cap(q('input[name="laterality"]:checked').value);
+function ureterDesc(){
+  if(q('input[name="ureter"]:checked').value === 'not included') return 'Not included';
+  const l = $('ureterLength').value.trim(), d = $('ureterDiameter').value.trim();
+  return `${l?`${l} cm length`:''}${d?`${l?' and ':''}${d} cm diameter`:''}` || 'Included';
+}
+function adrenalDesc(){
+  if(q('input[name="adrenal"]:checked').value === 'not included') return 'Not included';
+  const x=$('adrenalX').value.trim(),y=$('adrenalY').value.trim(),z=$('adrenalZ').value.trim(),w=$('adrenalWeight').value.trim();
+  return `${(x&&y&&z)?`${x}×${y}×${z} cm`:''}${w?`${x?' and ':''}${w} g`:''}` || 'Included';
+}
+
+/* generate report */
+function gen(){
+  const later = q('input[name="laterality"]:checked').value;
+  let procedure = $('procedure').value;
+  if(procedure === 'other') procedure = $('procedureOther').value.trim() || 'nephrectomy';
+  const tStage = $('tStage').value || 'T--';
+
+  let r = `DIAGNOSIS:\nRenal cell carcinoma (${tStage}), kidney, ${lateralityCap()}, ${procedure}...\n\n`;
+
+  /* specimen list */
+  const s1 = $('spec1Label').value.trim(); if(s1) r += `#1 [${s1}, ${later}]\n`;
+  const s2 = $('spec2Label').value.trim(); if(s2) r += `#2 [${s2}]\n`;
+  const sAdd = $('specAdditional').value.trim(); if(sAdd) r += `${sAdd}\n`;
+
+  /* gross description */
+  const nCont = $('numContainers').value.trim();
+  const gSize = $('specimenSize').value.trim(), gW = $('specimenWeight').value.trim();
+  const kx=$('kidneyX').value.trim(), ky=$('kidneyY').value.trim(), kz=$('kidneyZ').value.trim(), kw=$('kidneyWeight').value.trim();
+  const tx=$('tumorX').value.trim(), ty=$('tumorY').value.trim(), tz=$('tumorZ').value.trim();
+
+  r += `\nGROSS DESCRIPTION:\n`;
+  r += `Specimens were submitted in ${nCont?nCont:'--'} labeled container${nCont==='1'?'':'s'}.\n`;
+  r += `Specimen size and weight (Kidney + fat): ${gSize||'--'} cm${gW?` and ${gW} g`:''}\n`;
+  r += `  - Kidney: ${(kx&&ky&&kz)?`${kx}×${ky}×${kz} cm`:''}${kw?` and ${kw} g`:''}\n`;
+  r += `  - Ureter: ${ureterDesc()}\n`;
+  r += `  - Adrenal gland: ${adrenalDesc()}\n`;
+  r += `Tumor size: ${(tx&&ty&&tz)?`${tx}×${ty}×${tz} cm`:'--×--×-- cm'}\n`;
+  r += `Tumor site: ${$('tumorSite').value}\n`;
+  r += `Tumor focality: ${q('input[name="focality"]:checked').value}\n`;
+  r += `Tumor extent:\n`;
+  const ext=[]; ['Kidney','Perinephric','Sinus','Pelvicalyceal','Vein','Gerota','Adrenal']
+    .forEach(id=>{ if($(`extent${id}`).checked) ext.push($(`extent${id}`).nextSibling.textContent.trim()); });
+  if(ext.length) ext.forEach(e=>r+=`  - ${e}\n`); else r += `  - Not specified\n`;
+
+  const sections = $('sections').value.trim();
+  r += `\nRepresentative sections are taken and submitted${sections?`:\n${sections}\n`:'.\n'}`;
+
+  /* microscopic */
+  r += `\nMICROSCOPIC DESCRIPTION:\n`;
+  const ht = $('histoType').value, htO = $('histoTypeOther').value.trim();
+  r += `1. Histological type: ${(ht==='Other'&&htO)?htO:ht}\n`;
+
+  const g = q('input[name="grade"]:checked');
+  if(g){
+    r += `\n2. WHO/ISUP grade: ${g.value}`;
+    if(g.value==='G4'){
+      const t=$('g4Text').value.trim();
+      r += `, extreme nuclear pleomorphism / rhabdoid / sarcomatoid${t?` (${t})`:''}`;
+    }else if(g.value==='NA'){
+      const t=$('naText').value.trim();
+      r += `, not applicable${t?` (${t})`:''}`;
+    }else if(g.value==='G1') r += `, nucleoli inconspicuous @400×`;
+    else if(g.value==='G2') r += `, nucleoli conspicuous @400×`;
+    else if(g.value==='G3') r += `, nucleoli conspicuous @100×`;
+    else if(g.value==='GX') r += `, cannot be assessed`;
+  }
+
+  const mx=$('microTumorX').value.trim(), my=$('microTumorY').value.trim(), mz=$('microTumorZ').value.trim();
+  r += `\n3. Tumor size: ${(mx&&my&&mz)?`${mx}×${my}×${mz} cm`:(tx&&ty&&tz)?`${tx}×${ty}×${tz} cm`:'--×--×-- cm'}`;
+
+  r += `\n\n4. AJCC 8th T stage: ${$('tStage').selectedIndex>0?$('tStage').options[$('tStage').selectedIndex].text:'Not assigned'}`;
+
+  /* nodes */
+  const nStage = q('input[name="nStage"]:checked').value;
+  if(nStage==='pNX-no nodes') r += `\n\n5. Regional lymph nodes: pN not assigned (no nodes submitted)`;
+  else if(nStage==='pNX-cannot determine') r += `\n\n5. Regional lymph nodes: pN not assigned (cannot determine)`;
+  else if(nStage==='pN0'){
+    const pos=$('lnPositive').value.trim()||'0', tot=$('lnTotal').value.trim();
+    r += `\n\n5. Regional lymph nodes: pN0 – no metastasis${tot?` (${pos}/${tot})`:''}`;
+  }else if(nStage==='pN1'){
+    const pos=$('lnPositive').value.trim(), tot=$('lnTotal').value.trim();
+    r += `\n\n5. Regional lymph nodes: pN1 – metastasis${pos&&tot?` (${pos}/${tot})`:''}`;
+  }
+
+  /* margins & others */
+  const m=q('input[name="margin"]:checked').value, md=$('marginDistance').value.trim();
+  r += `\n\n6. Resection margin: ${m}${md?`, nearest ${md} cm`:''}`;
+  r += `\n\n7. Lymphovascular invasion: ${q('input[name="lvi"]:checked').value}`;
+  r += `\n\n8. Tumor necrosis: ${q('input[name="necrosis"]:checked').value}`;
+  r += `\n\n9. Non-neoplastic kidney: ${$('nonNeoplastic').value.trim()||'None'}`;
+  r += `\n\n10. Additional findings: ${$('additional').value.trim()||'None'}`;
+
+  const ihc=$('ihc').value.trim();
+  if(ihc){
+    r += `\n\n11. Immunohistochemistry${$('ihcSection').value.trim()?` (section ${$('ihcSection').value.trim()})`:''}:\n   ${ihc}`;
+  }
+
+  $('reportPreview').textContent = r;
+  saveForm();
+}
+
+/* copy & clear */
+function copyRpt(){
+  const txt=$('reportPreview').textContent;
+  if(!txt || txt.includes('Fill in')){ alert('Generate a report first!'); return; }
+  navigator.clipboard.writeText(txt).then(()=>{
+    const b=$('btnCopy'), o=b.textContent;
+    b.textContent='✓ Copied!'; b.style.background='#28a745';
+    setTimeout(()=>{b.textContent=o; b.style.background='';},2000);
+  }).catch(()=>alert('Copy failed – copy manually.'));
+}
+function clearForm(){
+  if(!confirm('Clear all fields?')) return;
+  qa('.form-section input, .form-section select, .form-section textarea')
+    .forEach(el=>{
+      if(el.type==='radio'||el.type==='checkbox') el.checked=el.defaultChecked;
+      else if(el.tagName==='SELECT') el.selectedIndex=0;
+      else el.value='';
+    });
+  toggleConditional(); gen(); localStorage.removeItem('rccReporterData');
+}
+
+/* init */
+window.addEventListener('load',()=>{
+  loadForm(); toggleConditional(); gen();
+  qa('input,select,textarea').forEach(el=>{
+    el.addEventListener('change',()=>{toggleConditional(); gen();});
+    el.addEventListener('input',gen);
+  });
+  $('btnGenerate').onclick=gen;
+  $('btnCopy').onclick=copyRpt;
+  $('btnClear').onclick=clearForm;
+});
+</script>
+</body>
+</html>
