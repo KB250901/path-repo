@@ -1,0 +1,643 @@
+<!-- File: /colon_cancer_reporter_improved_v2.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Colon Cancer Structured Pathology Reporter</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+           background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); min-height: 100vh; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,.2); overflow: hidden; }
+    .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; padding: 26px; text-align: center; }
+    .header h1 { margin: 0 0 6px; font-size: 24px; }
+    .content { display: grid; grid-template-columns: 1fr 1fr; }
+    .form-section { padding: 24px; max-height: calc(100vh - 180px); overflow: auto; }
+    .preview-section { padding: 24px; background: #f8f9fa; border-left: 2px solid #e9ecef; max-height: calc(100vh - 180px); overflow: auto; }
+    .section-title { font-size: 16px; font-weight: 700; color: #f5576c; border-bottom: 2px solid #f5576c; padding-bottom: 8px; margin: 18px 0 14px; }
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 13px; color: #333; margin-bottom: 6px; }
+    input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none; transition: border-color .2s; }
+    input:focus, select:focus, textarea:focus { border-color: #f5576c; box-shadow: 0 0 0 3px rgba(245,87,108,.12); }
+    textarea { min-height: 70px; resize: vertical; }
+    .inline { display: grid; grid-template-columns: repeat(12, 1fr); gap: 8px; }
+    .inline > * { grid-column: span 4; }
+    .report-preview { background: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 18px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; white-space: pre-wrap; line-height: 1.7; }
+    .button-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+    .btn { cursor: pointer; border: none; border-radius: 6px; padding: 12px; font-weight: 700; color: #fff; background: #6c757d; }
+    .btn.primary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .help { color: #6c757d; font-size: 12px; margin-top: 4px; }
+    .rep-row { display: grid; grid-template-columns: 140px 1fr 36px; gap: 8px; margin: 6px 0; }
+    .rm { background: #e11d48; }
+    @media (max-width: 968px) { .content { grid-template-columns: 1fr; } .preview-section { border-left: none; border-top: 2px solid #e9ecef; } }
+    @media print { .form-section, .header { display: none !important; } body { background: #fff; } .preview-section { border: none; } .report-preview { font-size: 12pt; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔬 Colon Cancer Structured Pathology Reporter</h1>
+      <div>Dynamic Interactive Report Generation Tool</div>
+    </div>
+
+    <div class="content">
+      <!-- Form -->
+      <section class="form-section" id="form">
+        <h2 class="section-title">Basic Information</h2>
+        <div class="form-group">
+          <label>Tumor Site *</label>
+          <select id="tumorSite">
+            <option>Rectum</option>
+            <option>Rectosigmoid region</option>
+            <option>Sigmoid colon</option>
+            <option>Descending colon</option>
+            <option>Splenic flexure</option>
+            <option>Transverse colon</option>
+            <option>Hepatic flexure</option>
+            <option>Ascending colon</option>
+            <option>Ileocecal valve</option>
+            <option>Cecum</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Procedure *</label>
+          <select id="procedure">
+            <option>Low anterior resection</option>
+            <option>Sigmoidectomy</option>
+            <option>Left hemicolectomy</option>
+            <option>Right hemicolectomy</option>
+            <option>Transverse colectomy</option>
+            <option>Total abdominal colectomy</option>
+            <option>Abdominoperineal resection</option>
+            <option>Transanal disk excision (local excision)</option>
+            <option value="other">Other (specify)</option>
+          </select>
+          <input id="procedureOther" type="text" placeholder="Specify other" />
+        </div>
+        <div class="form-group">
+          <label>REFERENCE (optional)</label>
+          <input type="text" id="reference" placeholder="e.g., S25-12345" />
+        </div>
+
+        <h2 class="section-title">Gross Description</h2>
+        <div class="form-group">
+          <label>Specimens are submitted in – labeled containers</label>
+          <input id="containerCount" type="number" min="0" step="1" placeholder="e.g., 3" />
+        </div>
+        <div class="form-group">
+          <label>Procedure (Gross)</label>
+          <select id="grossProcedure">
+            <option>Right hemicolectomy</option>
+            <option>Transverse colectomy</option>
+            <option>Left hemicolectomy</option>
+            <option>Sigmoidectomy</option>
+            <option>Low anterior resection</option>
+            <option>Total abdominal colectomy</option>
+            <option>Abdominoperineal resection</option>
+            <option>Transanal disk excision (local excision)</option>
+            <option value="other">Other (specify)</option>
+          </select>
+          <input id="grossProcedureOther" type="text" placeholder="Specify other" />
+          <div class="help">Shown in GROSS as “Procedure: …”</div>
+        </div>
+        <div class="form-group">
+          <label>Specimen size</label>
+          <input id="specimenSize" type="text" placeholder="e.g., 15 x 10 x 5 cm" />
+        </div>
+        <div class="form-group">
+          <label>Tumor size (cm)</label>
+          <div class="inline">
+            <input id="tumorX" type="number" step="0.1" placeholder="Length" />
+            <input id="tumorY" type="number" step="0.1" placeholder="Width" />
+            <input id="tumorZ" type="number" step="0.1" placeholder="Height" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Tumor focality *</label>
+          <div class="inline">
+            <label><input type="radio" name="focality" value="Unifocal" checked /> Unifocal</label>
+            <label><input type="radio" name="focality" value="Multiple" /> Multiple</label>
+          </div>
+        </div>
+        <div class="form-group" id="multipleGroup" style="display:none;">
+          <label>Number of tumors</label>
+          <input id="tumorNumber" type="number" min="2" step="1" placeholder="e.g., 2" />
+        </div>
+        <div class="form-group" id="multiSizesGroup" style="display:none;">
+          <label>Sizes for each tumor (cm)</label>
+          <div id="multiTumorRoot"></div>
+          <div class="help">Enter L × W × H per tumor. Count is driven by “Number of tumors”.</div>
+        </div>
+        <div class="form-group">
+          <label>Tumor appearance *</label>
+          <select id="appearance">
+            <option>Ulcerative</option>
+            <option>Polypoid</option>
+            <option>Ulcero-polypoid</option>
+            <option>Infiltrative</option>
+            <option value="other">Other (specify)</option>
+          </select>
+          <input id="appearanceOther" type="text" placeholder="Specify other appearance" />
+        </div>
+        <div class="form-group">
+          <label>Macroscopic tumor perforation *</label>
+          <div class="inline">
+            <label><input type="radio" name="perforation" value="Absent" checked /> Absent</label>
+            <label><input type="radio" name="perforation" value="Present" /> Present</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Resection margins status *</label>
+          <select id="marginStatus">
+            <option>Free of tumor</option>
+            <option>Involved</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Margin distances</label>
+          <div class="inline">
+            <input id="proximalMargin" type="number" step="0.1" placeholder="Proximal (cm)" />
+            <input id="distalMargin" type="number" step="0.1" placeholder="Distal (cm)" />
+            <input id="radialMargin" type="number" step="0.1" placeholder="Radial (mm)" />
+          </div>
+          <div class="help">Radial margin in mm, others in cm.</div>
+        </div>
+        <div class="form-group">
+          <label>Representative sections</label>
+          <div id="repRoot"></div>
+          <div class="rep-row">
+            <input class="rep-code" type="text" value="AA" />
+            <input class="rep-desc" type="text" value="resection margins" />
+            <button class="btn rm del" type="button">×</button>
+          </div>
+          <div class="rep-row">
+            <input class="rep-code" type="text" value="RB-RD" />
+            <input class="rep-desc" type="text" value="tumor" />
+            <button class="btn rm del" type="button">×</button>
+          </div>
+          <div class="rep-row">
+            <input class="rep-code" type="text" value="RE-RH" />
+            <input class="rep-desc" type="text" value="regional lymph nodes" />
+            <button class="btn rm del" type="button">×</button>
+          </div>
+          <button id="addRep" class="btn" type="button" style="margin-top:8px;">+ Add section</button>
+        </div>
+
+        <h2 class="section-title">Microscopic Description</h2>
+        <div class="form-group">
+          <label>Tumor histological type *</label>
+          <select id="histoType">
+            <option>Adenocarcinoma</option>
+            <option>Mucinous adenocarcinoma</option>
+            <option>Signet ring cell carcinoma</option>
+            <option>Adenosquamous carcinoma</option>
+            <option>Medullary carcinoma</option>
+            <option>Undifferentiated carcinoma</option>
+            <option value="other">Other (specify)</option>
+          </select>
+          <input id="histoOther" type="text" placeholder="Specify other type" />
+        </div>
+        <div class="form-group">
+          <label>Histological grade *</label>
+          <select id="grade">
+            <option>Well differentiated</option>
+            <option>Moderately differentiated</option>
+            <option>Poorly differentiated</option>
+            <option>Undifferentiated</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Microscopic tumor size (cm)</label>
+          <div class="inline">
+            <input id="microTumorX" type="number" step="0.1" placeholder="Length" />
+            <input id="microTumorY" type="number" step="0.1" placeholder="Width" />
+            <input id="microTumorZ" type="number" step="0.1" placeholder="Height" />
+          </div>
+          <div class="inline" style="grid-template-columns:auto; margin-top:6px;">
+            <label><input type="checkbox" id="microSizeSameGross" /> Same as gross</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Invasion depth (T stage) *</label>
+          <select id="tStage">
+            <option value="Tis">Tis - Mucosa (carcinoma in situ)</option>
+            <option value="T1">T1 - Submucosa</option>
+            <option value="T2">T2 - Muscularis propria</option>
+            <option value="T3">T3 - Pericolorectal tissues</option>
+            <option value="T4a">T4a - Surface of visceral peritoneum</option>
+            <option value="T4b">T4b - Invade directly to other organs</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Angiolymphatic invasion *</label>
+          <div class="inline">
+            <label><input type="radio" name="lvi" value="Absent" checked /> Absent</label>
+            <label><input type="radio" name="lvi" value="Present" /> Present</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Perineural invasion *</label>
+          <div class="inline">
+            <label><input type="radio" name="pni" value="Absent" checked /> Absent</label>
+            <label><input type="radio" name="pni" value="Present" /> Present</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Tumor deposits *</label>
+          <div class="inline">
+            <label><input type="radio" name="deposits" value="Absent" checked /> Absent</label>
+            <label><input type="radio" name="deposits" value="Present" /> Present</label>
+          </div>
+          <div class="help">Discontinuous extramural extension.</div>
+        </div>
+
+        <h2 class="section-title">Microscopic Margins</h2>
+        <div class="form-group">
+          <label>Proximal surgical margin *</label>
+          <select id="proximalMicroMargin">
+            <option>uninvolved</option>
+            <option>involved</option>
+          </select>
+        </div>
+        <div class="form-group" id="proximalDistanceGroup">
+          <label>Proximal margin distance (cm)</label>
+          <input id="proximalMicroDistance" type="number" step="0.1" placeholder="Distance in cm" />
+        </div>
+        <div class="form-group">
+          <label>Distal surgical margin *</label>
+          <select id="distalMicroMargin">
+            <option>uninvolved</option>
+            <option>involved</option>
+          </select>
+        </div>
+        <div class="form-group" id="distalDistanceGroup">
+          <label>Distal margin distance (cm)</label>
+          <input id="distalMicroDistance" type="number" step="0.1" placeholder="Distance in cm" />
+        </div>
+        <div class="form-group">
+          <label>Radial/Mesenteric margin *</label>
+          <select id="radialMicroMargin">
+            <option>uninvolved</option>
+            <option>involved (less than 1 mm)</option>
+          </select>
+        </div>
+        <div class="form-group" id="radialDistanceGroup">
+          <label>Radial margin distance (mm)</label>
+          <input id="radialMicroDistance" type="number" step="0.1" placeholder="Distance in mm" />
+        </div>
+        <div class="form-group">
+          <label>Copy gross distances</label>
+          <div class="inline" style="grid-template-columns:auto auto auto;">
+            <label><input type="checkbox" id="proxSameGross" /> Proximal — same as gross</label>
+            <label><input type="checkbox" id="distSameGross" /> Distal — same as gross</label>
+            <label><input type="checkbox" id="radSameGross" /> Radial — same as gross</label>
+          </div>
+        </div>
+
+        <h2 class="section-title">Lymph Node Status</h2>
+        <div class="inline">
+          <input id="lnPositive" type="number" min="0" step="1" placeholder="Positive nodes" value="0" />
+          <input id="lnTotal" type="number" min="0" step="1" placeholder="Total nodes examined" />
+        </div>
+        <div class="form-group" id="ecsGroup" style="display:none;">
+          <label>Extra-capsular spread (ECS) *</label>
+          <div class="inline">
+            <label><input type="radio" name="ecs" value="Absent" checked /> Absent</label>
+            <label><input type="radio" name="ecs" value="Present" /> Present</label>
+          </div>
+        </div>
+
+        <h2 class="section-title">Treatment Response</h2>
+        <div class="form-group">
+          <label>Tumor Regression Grading (S/P CCRT)</label>
+          <select id="trg">
+            <option>Not applicable</option>
+            <option>Grade 0 (no regression)</option>
+            <option>Grade 1 (minor regression, ≤25% fibrosis)</option>
+            <option>Grade 2 (26–50% fibrosis)</option>
+            <option>Grade 3 (>50% fibrosis)</option>
+            <option>Grade 4 (complete regression)</option>
+          </select>
+        </div>
+
+        <h2 class="section-title">Additional Findings</h2>
+        <div class="form-group">
+          <label>Additional pathologic findings</label>
+          <textarea id="additional" placeholder="e.g., adenomatous polyps, IBD, diverticulosis"></textarea>
+        </div>
+
+        <div class="button-group">
+          <button class="btn primary" id="btnGenerate">Generate</button>
+          <button class="btn" id="btnCopy">Copy</button>
+          <button class="btn" id="btnClear">Clear</button>
+        </div>
+      </section>
+
+      <!-- Preview -->
+      <section class="preview-section">
+        <h2 class="section-title">Report Preview</h2>
+        <div id="reportPreview" class="report-preview"><em class="help">Fill in the form to generate the report…</em></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const $ = (s, el=document) => el.querySelector(s);
+      const qa = (s, el=document) => Array.from(el.querySelectorAll(s));
+
+      // Bind basics
+      bindAll();
+
+      // Toggle helpers for optional text fields
+      $('#procedureOther').disabled = true; $('#histoOther').disabled = true; $('#appearanceOther').disabled = true; $('#grossProcedureOther').disabled = true;
+      $('#procedure').addEventListener('change', e => toggle($('#procedureOther'), e.target.value === 'other'));
+      $('#histoType').addEventListener('change', e => toggle($('#histoOther'), e.target.value === 'other'));
+      $('#appearance').addEventListener('change', e => toggle($('#appearanceOther'), e.target.value === 'other'));
+      $('#grossProcedure').addEventListener('change', e => toggle($('#grossProcedureOther'), e.target.value === 'other'));
+
+      // Focality + number → multi-size rows
+      qa('input[name="focality"]').forEach(el => el.addEventListener('change', e => {
+        const isMulti = e.target.value === 'Multiple';
+        $('#multipleGroup').style.display = isMulti ? 'block' : 'none';
+        $('#multiSizesGroup').style.display = (isMulti && (parseInt($('#tumorNumber').value,10) >= 2)) ? 'block' : 'none';
+        rebuildMultiTumorRows();
+        applyMicroSizeFromGross();
+      }));
+      $('#tumorNumber').addEventListener('input', () => {
+        $('#multiSizesGroup').style.display = (parseInt($('#tumorNumber').value,10) >= 2) ? 'block' : 'none';
+        rebuildMultiTumorRows();
+        applyMicroSizeFromGross();
+      });
+
+      // ECS visible only if positive nodes > 0
+      $('#lnPositive').addEventListener('input', () => { $('#ecsGroup').style.display = (toInt($('#lnPositive').value) > 0) ? 'block' : 'none'; });
+
+      // Microscopic margin distance visibility
+      $('#proximalMicroMargin').addEventListener('change', () => { $('#proximalDistanceGroup').style.display = ($('#proximalMicroMargin').value === 'uninvolved') ? 'block' : 'none'; applyMicroMarginsFromGross(); });
+      $('#distalMicroMargin').addEventListener('change', () => { $('#distalDistanceGroup').style.display = ($('#distalMicroMargin').value === 'uninvolved') ? 'block' : 'none'; applyMicroMarginsFromGross(); });
+      $('#radialMicroMargin').addEventListener('change', () => { $('#radialDistanceGroup').style.display = ($('#radialMicroMargin').value === 'uninvolved') ? 'block' : 'none'; applyMicroMarginsFromGross(); });
+
+      // “Same as gross” checkboxes
+      $('#microSizeSameGross').addEventListener('change', ()=>{ applyMicroSizeFromGross(); generateReport(); });
+      $('#proxSameGross').addEventListener('change', ()=>{ applyMicroMarginsFromGross(); generateReport(); });
+      $('#distSameGross').addEventListener('change', ()=>{ applyMicroMarginsFromGross(); generateReport(); });
+      $('#radSameGross').addEventListener('change', ()=>{ applyMicroMarginsFromGross(); generateReport(); });
+
+      // Keep micro in sync if gross changes while “same as gross” is on
+      ['#tumorX','#tumorY','#tumorZ','#proximalMargin','#distalMargin','#radialMargin'].forEach(sel=>{
+        $(sel).addEventListener('input', ()=>{ applyMicroSizeFromGross(); applyMicroMarginsFromGross(); });
+      });
+
+      // Representative sections add/remove
+      $('#addRep').addEventListener('click', addRepRow);
+      qa('.del').forEach(btn => btn.addEventListener('click', (e)=>{ e.currentTarget.closest('.rep-row').remove(); generateReport(); }));
+
+      // Buttons
+      $('#btnGenerate').addEventListener('click', (e)=>{ e.preventDefault(); generateReport(); });
+      $('#btnCopy').addEventListener('click', ()=> { const t = $('#reportPreview').textContent; if(!t.trim()) return; navigator.clipboard.writeText(t).then(()=> flash('#btnCopy','Copied!'), ()=>alert('Copy failed')); });
+      $('#btnClear').addEventListener('click', ()=>{ if(!confirm('Clear all fields?')) return; clearForm(); });
+
+      // Helpers
+      function bindAll(){ qa('input, select, textarea').forEach(el => { el.addEventListener('input', generateReport); el.addEventListener('change', generateReport); }); }
+      function addRepRow(){
+        const row = document.createElement('div');
+        row.className = 'rep-row';
+        row.innerHTML = `
+          <input class="rep-code" type="text" placeholder="Code (e.g., AA)" />
+          <input class="rep-desc" type="text" placeholder="Description (e.g., resection margins)" />
+          <button class="btn rm del" type="button">×</button>
+        `;
+        row.querySelector('.del').addEventListener('click', ()=>{ row.remove(); generateReport(); });
+        $('#repRoot').appendChild(row); generateReport();
+      }
+      function rebuildMultiTumorRows(){
+        const root = $('#multiTumorRoot'); root.innerHTML='';
+        const isMulti = qa('input[name="focality"]:checked')[0].value === 'Multiple';
+        const n = parseInt($('#tumorNumber').value,10);
+        if (!isMulti || !Number.isFinite(n) || n < 2) { $('#multiSizesGroup').style.display = 'none'; return; }
+        $('#multiSizesGroup').style.display = 'block';
+        for (let i=1;i<=n;i++){
+          const label = document.createElement('div');
+          label.textContent = `Tumor ${i}`;
+          label.style.gridColumn = 'span 12';
+          label.style.color = '#6c757d';
+          label.style.fontSize = '12px';
+          const row = document.createElement('div'); row.className='inline'; row.style.marginBottom='6px';
+          const L = document.createElement('input'); L.type='number'; L.step='0.1'; L.placeholder='Length'; L.dataset.idx=i; L.dataset.role='L';
+          const W = document.createElement('input'); W.type='number'; W.step='0.1'; W.placeholder='Width';  W.dataset.idx=i; W.dataset.role='W';
+          const H = document.createElement('input'); H.type='number'; H.step='0.1'; H.placeholder='Height'; H.dataset.idx=i; H.dataset.role='H';
+          [L,W,H].forEach(inp=> inp.addEventListener('input', ()=>{ applyMicroSizeFromGross(); generateReport(); }));
+          root.appendChild(label);
+          row.appendChild(L); row.appendChild(W); row.appendChild(H);
+          root.appendChild(row);
+        }
+      }
+      function getMultiTumorSizes(){
+        const root = $('#multiTumorRoot');
+        const Ls = qa('input[data-role="L"]', root), Ws = qa('input[data-role="W"]', root), Hs = qa('input[data-role="H"]', root);
+        const n = Math.max(Ls.length, Ws.length, Hs.length);
+        const out = [];
+        for(let i=0;i<n;i++){
+          out.push({
+            L: Ls[i] ? parseFloat(Ls[i].value) : NaN,
+            W: Ws[i] ? parseFloat(Ws[i].value) : NaN,
+            H: Hs[i] ? parseFloat(Hs[i].value) : NaN
+          });
+        }
+        return out;
+      }
+      function multiSizesString(){
+        const arr = getMultiTumorSizes();
+        if (!arr.length) return '';
+        const fmt = (o)=>{ const l=isFinite(o.L)?o.L:''; const w=isFinite(o.W)?o.W:''; const h=isFinite(o.H)?o.H:''; if(l===''&&w==='') return ''; return `${l||'__'} x ${w||'__'}${(h!==''?' x '+h:'')} cm`; };
+        return arr.map((o,i)=>{ const s = fmt(o); return s? `T${i+1}: ${s}`: '' }).filter(Boolean).join('; ');
+      }
+      function largestDimsFromGross(){
+        const isMulti = qa('input[name="focality"]:checked')[0].value === 'Multiple';
+        if (isMulti){
+          const arr = getMultiTumorSizes();
+          if (arr.length){
+            let L=NaN,W=NaN,H=NaN;
+            arr.forEach(o=>{
+              if(isFinite(o.L)) L = isFinite(L)? Math.max(L,o.L): o.L;
+              if(isFinite(o.W)) W = isFinite(W)? Math.max(W,o.W): o.W;
+              if(isFinite(o.H)) H = isFinite(H)? Math.max(H,o.H): o.H;
+            });
+            return {L,W,H};
+          }
+        }
+        const L = parseFloat($('#tumorX').value);
+        const W = parseFloat($('#tumorY').value);
+        const H = parseFloat($('#tumorZ').value);
+        return {L,W,H};
+      }
+      function applyMicroSizeFromGross(){
+        const on = $('#microSizeSameGross').checked;
+        ['#microTumorX','#microTumorY','#microTumorZ'].forEach(sel=>{ const el=$(sel); el.disabled = on; el.style.opacity = on? '.7':'1'; });
+        if (!on) return;
+        const d = largestDimsFromGross();
+        $('#microTumorX').value = isFinite(d.L)? String(d.L): '';
+        $('#microTumorY').value = isFinite(d.W)? String(d.W): '';
+        $('#microTumorZ').value = isFinite(d.H)? String(d.H): '';
+      }
+      function applyMicroMarginsFromGross(){
+        const map = [
+          { cb:'#proxSameGross', gross:'#proximalMargin', micro:'#proximalMicroDistance', sel:'#proximalMicroMargin' },
+          { cb:'#distSameGross', gross:'#distalMargin',   micro:'#distalMicroDistance',   sel:'#distalMicroMargin' },
+          { cb:'#radSameGross',  gross:'#radialMargin',   micro:'#radialMicroDistance',   sel:'#radialMicroMargin' }
+        ];
+        map.forEach(m=>{
+          const on = $(m.cb).checked; const micro = $(m.micro); const status = $(m.sel).value;
+          micro.disabled = on; micro.style.opacity = on? '.7':'1';
+          if (on && status === 'uninvolved'){ micro.value = $(m.gross).value; }
+        });
+      }
+      function getNStage(){
+        const positive = toInt($('#lnPositive').value) || 0;
+        if (positive === 0) return 'N0';
+        if (positive >= 1 && positive <= 3) return 'N1';
+        if (positive >= 4 && positive <= 6) return 'N2a';
+        if (positive >= 7) return 'N2b';
+        return 'Nx';
+      }
+      function cap(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+      function nz(v, p='__'){ return (v!==undefined && v!==null && String(v).trim()!=='') ? v : p; }
+      function num3(x,y,z,unit='cm'){ let out=''; if(x) out+=x; if(y) out+=(out? ' x ':'')+y; if(z) out+=(out? ' x ':'')+z; return out? out+' '+unit : ''; }
+      function toInt(v){ const n = parseInt(v,10); return Number.isFinite(n) ? n : NaN; }
+      function toggle(el,on){ el.disabled = !on; el.style.opacity = on? '1' : '.6'; if(!on) el.value=''; }
+      function flash(sel, txt){ const b=$(sel); const t=b.textContent; const bg=b.style.background; b.textContent=txt; b.style.background='#16a34a'; setTimeout(()=>{ b.textContent=t; b.style.background=bg; }, 1200); }
+
+      function generateReport(){
+        const site = $('#tumorSite').value;
+        const proc = ($('#procedure').value === 'other') ? ($('#procedureOther').value || 'Other (specify)') : $('#procedure').value;
+        const histo = ($('#histoType').value === 'other') ? ($('#histoOther').value || 'Other (specify)') : $('#histoType').value;
+        const tStage = $('#tStage').value;
+        const lnPos = nz($('#lnPositive').value, '0');
+        const lnTot = nz($('#lnTotal').value, '/');
+        const nStage = getNStage();
+        const ref = $('#reference').value;
+
+        let report = 'DIAGNOSIS:\n\n';
+        report += `${histo} (${tStage}), with regional lymph node status (${nStage}, ${lnPos}/${lnTot}), ${site.toLowerCase()}, ${proc}\n`;
+        report += '\n\nREFERENCE:\n';
+        report += (ref ? `\n${ref}\n` : '\n');
+
+        // GROSS
+        report += '\nGROSS DESCRIPTION:\n\n';
+        const containers = $('#containerCount').value;
+        if (containers) {
+          const cc = parseInt(containers,10);
+          const noun = (Number.isFinite(cc) && cc === 1) ? 'container' : 'containers';
+          report += `Specimens are submitted in ${containers} labeled ${noun}.\n\n`;
+        }
+
+        // Numbered gross items
+        const gp = ($('#grossProcedure').value === 'other') ? ($('#grossProcedureOther').value || 'Other (specify)') : $('#grossProcedure').value;
+        const spec = $('#specimenSize').value;
+        const foc = qa('input[name="focality"]:checked')[0].value;
+        const n = $('#tumorNumber').value;
+        const app = ($('#appearance').value === 'other') ? ($('#appearanceOther').value || 'Other (specify)') : $('#appearance').value;
+        const perf = qa('input[name="perforation"]:checked')[0].value;
+        const pm=$('#proximalMargin').value, dm=$('#distalMargin').value, rm=$('#radialMargin').value;
+
+        const baseSize = num3($('#tumorX').value, $('#tumorY').value, $('#tumorZ').value, 'cm') || '__ x __ x __ cm';
+        const sizeItem = (foc==='Multiple')
+          ? (`Tumor sizes: ${multiSizesString() || '__'}`)
+          : (`Tumor size: ${baseSize}`);
+
+        const grossItems = [
+          `Procedure: ${gp}`,
+          `Specimen size: ${spec || ''}`,
+          `Tumor site: ${cap(site)}`,
+          sizeItem,
+          `Tumor focality: ${foc}${(foc==='Multiple' && n)?` (specify tumor number: ${n})`:''}`,
+          `Tumor appearance: ${app}`,
+          `Macroscopic tumor perforation: ${perf}`,
+          `Resection margins: ${$('#marginStatus').value}`,
+          `Margin distances: ` + (pm||dm||rm ? `Tumor is ${pm? pm+' cm from the proximal margin, ':''}${dm? dm+' cm from the distal margin, ':''}${rm? rm+' mm from the circumferential radial margin':''}`.replace(/, $/,'') + '.' : '__')
+        ];
+        grossItems.forEach((txt,i)=>{ report += `${i+1}. ${txt}\n\n`; });
+
+        // Representative sections
+        const rows = qa('.rep-row');
+        if (rows.length){
+          report += `\nRepresentative sections are submitted in the cassettes labeled as follows:\n`;
+          rows.forEach(r=>{
+            const c = (r.querySelector('.rep-code')||{}).value||'';
+            const d = (r.querySelector('.rep-desc')||{}).value||'';
+            if(c||d) report += `\n${c}: ${d}`;
+          });
+        }
+
+        // MICROSCOPIC DESCRIPTION
+        report += `\n\n\nMICROSCOPIC DESCRIPTION:\n`;
+        report += `\nA. Tumor histological type: ${histo}`;
+        report += `\n\nB. Histological grade: ${$('#grade').value}`;
+        const msize = num3($('#microTumorX').value, $('#microTumorY').value, $('#microTumorZ').value, 'cm');
+        report += `\n\nC. Tumor size: ${msize || '___ x ___ x ___ cm'}`;
+        const tText = $('#tStage').selectedOptions[0].textContent;
+        report += `\n\nD. Invasion depth: ${tText}`;
+        report += `\n\nE. Angiolymphatic invasion: ${qa('input[name="lvi"]:checked')[0].value}`;
+        report += `\n\nF. Perineural invasion: ${qa('input[name="pni"]:checked')[0].value}`;
+        report += `\n\nG. Tumor deposits (discontinuous extramural extension): ${qa('input[name="deposits"]:checked')[0].value}`;
+
+        // Microscopic margins
+        report += `\n\nH. Resection margins:`;
+        const pM = $('#proximalMicroMargin').value; const pD = $('#proximalMicroDistance').value; report += `\n   1. Proximal surgical margin: ${pM}${pM==='uninvolved' ? `, ${pD||'__'} cm in closest distance` : ''}`;
+        const dM = $('#distalMicroMargin').value; const dD = $('#distalMicroDistance').value; report += `\n   2. Distal surgical margin: ${dM}${dM==='uninvolved' ? `, ${dD||'__'} cm in closest distance` : ''}`;
+        const rM = $('#radialMicroMargin').value; const rD = $('#radialMicroDistance').value; report += `\n   3. Radial or Mesenteric Margin: ${rM}${rM==='uninvolved' ? `, ${rD||'__'} mm in distance` : ''}`;
+
+        // LNs
+        report += `\n\nI. Lymph nodes status:`;
+        report += `\n   1. Metastasis: Detected in ${lnPos} of the ${lnTot} lymph nodes (${lnPos}/${lnTot}, ${nStage})`;
+        if (toInt($('#lnPositive').value) > 0){
+          report += `\n   2. Extra-capsular spread (ECS): ${qa('input[name="ecs"]:checked')[0].value}`;
+        } else {
+          report += `\n   2. Extra-capsular spread (ECS): Not applicable`;
+        }
+
+        // TRG
+        report += `\n\nJ. Tumor Regression Grading S/P CCRT: ${$('#trg').value}`;
+
+        // Additional
+        const add = $('#additional').value;
+        report += `\n\nK. Additional pathologic finding: ${add ? add : ''}`;
+
+        $('#reportPreview').textContent = report;
+      }
+
+      function clearForm(){
+        qa('input[type="text"], input[type="number"], textarea').forEach(el => el.value = '');
+        qa('select').forEach(el => el.selectedIndex = 0);
+        qa('input[name="focality"][value="Unifocal"]')[0].checked = true;
+        qa('input[name="perforation"][value="Absent"]')[0].checked = true;
+        qa('input[name="lvi"][value="Absent"]')[0].checked = true;
+        qa('input[name="pni"][value="Absent"]')[0].checked = true;
+        qa('input[name="deposits"][value="Absent"]')[0].checked = true;
+        qa('input[name="ecs"][value="Absent"]')[0].checked = true;
+        ['#microSizeSameGross','#proxSameGross','#distSameGross','#radSameGross'].forEach(sel=>{ const cb=$(sel); cb.checked=false; });
+        $('#multipleGroup').style.display = 'none';
+        $('#multiSizesGroup').style.display = 'none';
+        $('#ecsGroup').style.display = 'none';
+        $('#proximalDistanceGroup').style.display = 'block';
+        $('#distalDistanceGroup').style.display = 'block';
+        $('#radialDistanceGroup').style.display = 'block';
+        $('#reportPreview').innerHTML = '<em class="help">Fill in the form to generate the report…</em>';
+      }
+
+      // Init
+      window.addEventListener('load', () => {
+        $('#proximalDistanceGroup').style.display = 'block';
+        $('#distalDistanceGroup').style.display = 'block';
+        $('#radialDistanceGroup').style.display = 'block';
+        rebuildMultiTumorRows();
+        applyMicroSizeFromGross();
+        applyMicroMarginsFromGross();
+        generateReport();
+      });
+    })();
+  </script>
+</body>
+</html>
