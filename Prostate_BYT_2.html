@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prostate Cancer Structured Pathology Reporter — Cassette & LN Details</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);min-height:100vh;padding:20px}
+    .container{max-width:1200px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.2);overflow:hidden}
+    .header{background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);color:#fff;padding:26px;text-align:center}
+    .header h1{margin:0 0 6px;font-size:24px}
+    .content{display:grid;grid-template-columns:1fr 1fr}
+    .form{padding:24px;max-height:calc(100vh - 180px);overflow:auto}
+    .preview{padding:24px;background:#f8f9fa;border-left:2px solid #e9ecef;max-height:calc(100vh - 180px);overflow:auto}
+    .title{font-size:16px;font-weight:700;color:#0ea5e9;border-bottom:2px solid #0ea5e9;padding-bottom:8px;margin:18px 0 14px}
+    .group{margin-bottom:14px}
+    label{display:block;font-size:13px;color:#333;margin-bottom:6px}
+    input[type=text],input[type=number],select,textarea{width:100%;padding:9px 11px;border:1px solid #ddd;border-radius:6px;font-size:14px;outline:none;transition:border-color .2s}
+    input:focus,select:focus,textarea:focus{border-color:#0ea5e9;box-shadow:0 0 0 3px rgba(14,165,233,.12)}
+    textarea{min-height:70px;resize:vertical}
+    .inline{display:grid;grid-template-columns:repeat(12,1fr);gap:8px}
+    .inline>*{grid-column:span 4}
+    .tri{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .report{background:#fff;border:1px solid #dee2e6;border-radius:8px;padding:18px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;white-space:pre-wrap;line-height:1.7}
+    .btns{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+    .btn{cursor:pointer;border:none;border-radius:6px;padding:12px;font-weight:700;color:#fff;background:#6c757d}
+    .btn.primary{background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%)}
+    .help{color:#6c757d;font-size:12px;margin-top:4px}
+    .row{display:grid;grid-template-columns:140px 1fr 36px;gap:8px;margin:6px 0}
+    .row3{display:grid;grid-template-columns:1fr 100px 100px 36px;gap:8px;margin:6px 0}
+    .rm{background:#e11d48}
+    @media (max-width:968px){.content{grid-template-columns:1fr}.preview{border-left:none;border-top:2px solid #e9ecef}}
+    @media print{.form,.header{display:none!important}body{background:#fff}.preview{border:none}.report{font-size:12pt}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔬 Prostate Cancer Structured Pathology Reporter</h1>
+      <div>Dynamic Interactive Report Generation Tool</div>
+    </div>
+    <div class="content">
+      <section class="form">
+        <h2 class="title">Basic Information</h2>
+        <div class="group">
+          <label>Procedure *</label>
+          <select id="procedure">
+            <option>Radical prostatectomy</option>
+            <option>Radical prostatectomy with pelvic lymph node dissection</option>
+            <option value="other">Other (specify)</option>
+          </select>
+          <input id="procedureOther" type="text" placeholder="Specify other procedure" />
+        </div>
+
+        <h2 class="title">Gross Description — Specimen #1 (Prostate)</h2>
+        <div class="group">
+          <label>Specimens are submitted in – labeled container(s)</label>
+          <input id="containerCount" type="number" min="0" step="1" placeholder="e.g., 3" />
+        </div>
+        <div class="group">
+          <label>Total weight (gram)</label>
+          <input id="weight" type="number" step="0.1" placeholder="Weight in gram" />
+        </div>
+        <div class="group">
+          <label>Prostate size (cm)</label>
+          <div class="tri">
+            <input id="prostateX" type="number" step="0.1" placeholder="Length" />
+            <input id="prostateY" type="number" step="0.1" placeholder="Width" />
+            <input id="prostateZ" type="number" step="0.1" placeholder="Height" />
+          </div>
+        </div>
+        <div class="group">
+          <label>Right seminal vesicle size (cm)</label>
+          <div class="tri">
+            <input id="rsvX" type="number" step="0.1" placeholder="Length" />
+            <input id="rsvY" type="number" step="0.1" placeholder="Width" />
+            <input id="rsvZ" type="number" step="0.1" placeholder="Height" />
+          </div>
+        </div>
+        <div class="group">
+          <label>Right vas deferens (length × diameter, cm)</label>
+          <div class="inline">
+            <input id="rvdLength" type="number" step="0.1" placeholder="Length" />
+            <input id="rvdDiameter" type="number" step="0.1" placeholder="Diameter" />
+          </div>
+        </div>
+        <div class="group">
+          <label>Left seminal vesicle size (cm)</label>
+          <div class="tri">
+            <input id="lsvX" type="number" step="0.1" placeholder="Length" />
+            <input id="lsvY" type="number" step="0.1" placeholder="Width" />
+            <input id="lsvZ" type="number" step="0.1" placeholder="Height" />
+          </div>
+        </div>
+        <div class="group">
+          <label>Left vas deferens (length × diameter, cm)</label>
+          <div class="inline">
+            <input id="lvdLength" type="number" step="0.1" placeholder="Length" />
+            <input id="lvdDiameter" type="number" step="0.1" placeholder="Diameter" />
+          </div>
+        </div>
+
+        <h2 class="title">Additional Specimens</h2>
+        <div class="group">
+          <label>#2 Preprostate fat (anterior margin)</label>
+          <div class="inline">
+            <input id="spec2Pieces" type="text" placeholder="No. of pieces" />
+            <input id="spec2Size" type="text" placeholder="Size (e.g., 2 × 1 × 0.5 cm)" />
+          </div>
+        </div>
+        <div class="group">
+          <label>#3 Pelvic LN (side)</label>
+          <div class="inline">
+            <select id="spec3Side">
+              <option value="">None</option>
+              <option>right</option>
+              <option>left</option>
+            </select>
+            <input id="spec3Pieces" type="text" placeholder="No. of pieces" />
+            <input id="spec3Size" type="text" placeholder="Size" />
+          </div>
+        </div>
+        <div class="group">
+          <label>#4 Pelvic LN (side)</label>
+          <div class="inline">
+            <select id="spec4Side">
+              <option value="">None</option>
+              <option>right</option>
+              <option>left</option>
+            </select>
+            <input id="spec4Pieces" type="text" placeholder="No. of pieces" />
+            <input id="spec4Size" type="text" placeholder="Size" />
+          </div>
+        </div>
+        <div class="group">
+          <label>#5 Other (specify)</label>
+          <textarea id="spec5" placeholder="Description of additional specimen"></textarea>
+        </div>
+
+        <h2 class="title">Cassette Labels (dynamic)</h2>
+        <div class="group">
+          <label>Embedded in toto and labeled as:</label>
+          <div id="cassRoot"></div>
+          <button id="addCass" class="btn" type="button" style="margin-top:8px">+ Add cassette</button>
+          <div class="help">Examples: AA-AB: right seminal vesicle and vas deferens; AE: apex, right; AF: apex, left; AG-AN: prostate, right lobe; AO-AZ: prostate, left lobe.</div>
+        </div>
+
+        <h2 class="title">Microscopic Description</h2>
+        <div class="group">
+          <label>Tumor histological type *</label>
+          <select id="histoType">
+            <option>Adenocarcinoma</option>
+            <option>Ductal adenocarcinoma</option>
+            <option>Mucinous adenocarcinoma</option>
+            <option>Signet ring cell carcinoma</option>
+            <option>Small cell carcinoma</option>
+            <option>Squamous cell carcinoma</option>
+            <option>Adenosquamous carcinoma</option>
+            <option>Sarcomatoid carcinoma</option>
+            <option value="other">Other (specify)</option>
+          </select>
+          <input id="histoOther" type="text" placeholder="Specify other type" />
+        </div>
+        <div class="group">
+          <label>Grade Group *</label>
+          <select id="gradeGroup">
+            <option value="">-- Select Grade Group --</option>
+            <option value="1">Grade Group 1 (Gleason 3+3=6)</option>
+            <option value="2">Grade Group 2 (Gleason 3+4=7)</option>
+            <option value="3">Grade Group 3 (Gleason 4+3=7)</option>
+            <option value="4">Grade Group 4 (Gleason 4+4=8, 3+5=8, 5+3=8)</option>
+            <option value="5">Grade Group 5 (Gleason 9-10)</option>
+            <option value="custom">Custom Gleason Score</option>
+          </select>
+        </div>
+        <div class="group" id="gleasonCustom" style="display:none">
+          <label>Custom Gleason Score</label>
+          <div class="inline" style="grid-template-columns:auto auto auto auto auto">
+            <input id="primaryScore" type="number" min="3" max="5" placeholder="Primary" />
+            <div style="align-self:center">+</div>
+            <input id="secondaryScore" type="number" min="3" max="5" placeholder="Secondary" />
+            <div style="align-self:center">=</div>
+            <input id="totalScore" type="number" placeholder="Total" readonly />
+          </div>
+          <div class="help">Auto-calculates total and Grade Group.</div>
+        </div>
+        <div class="group">
+          <label>Tumor volume *</label>
+          <select id="tumorVolume">
+            <option>Less than 5%</option>
+            <option>More than 5%</option>
+          </select>
+        </div>
+        <div id="volumeDetail" class="group" style="display:none">
+          <label>Volume details (if >5%)</label>
+          <div class="inline">
+            <input id="totalVolume" type="number" min="5" max="100" placeholder="Approx total %" />
+            <input id="rightLobe" type="number" min="0" max="100" placeholder="Right lobe %" />
+            <input id="leftLobe" type="number" min="0" max="100" placeholder="Left lobe %" />
+          </div>
+        </div>
+        <div class="group">
+          <label>Lymphovascular invasion *</label>
+          <div class="inline">
+            <label><input type="radio" name="lvi" value="Absent" checked /> Absent</label>
+            <label><input type="radio" name="lvi" value="Present" /> Present</label>
+          </div>
+        </div>
+        <div class="group">
+          <label>Extraprostatic extension *</label>
+          <div class="inline">
+            <label><input type="radio" name="epe" value="Absent" checked /> Absent</label>
+            <label><input type="radio" name="epe" value="Present" /> Present</label>
+            <label><input type="radio" name="epe" value="Indeterminate" /> Indeterminate (capsular incision)</label>
+          </div>
+        </div>
+        <div class="group" id="epeSite" style="display:none">
+          <label>EPE site</label>
+          <input id="epeSiteText" type="text" placeholder="e.g., right posterolateral" />
+        </div>
+        <div class="group">
+          <label>Seminal vesicle invasion *</label>
+          <div class="inline">
+            <label><input type="radio" name="svi" value="Absent" checked /> Absent</label>
+            <label><input type="radio" name="svi" value="Present" /> Present</label>
+          </div>
+        </div>
+        <div class="group">
+          <label>Surgical margins *</label>
+          <div class="inline">
+            <label><input type="radio" name="margins" value="Free" checked /> Free</label>
+            <label><input type="radio" name="margins" value="Involved" /> Involved by invasive carcinoma</label>
+          </div>
+        </div>
+        <div class="group" id="marginSite" style="display:none">
+          <label>Margin involvement site</label>
+          <input id="marginSiteText" type="text" placeholder="e.g., apex, right posterolateral" />
+        </div>
+
+        <h2 class="title">Lymph Node Status</h2>
+        <div class="group">
+          <label>Overall counts</label>
+          <div class="inline">
+            <input id="lnPositive" type="number" min="0" step="1" placeholder="Positive nodes" value="0" />
+            <input id="lnTotal" type="number" min="0" step="1" placeholder="Total nodes" />
+          </div>
+        </div>
+        <div class="group" id="ecsGroup" style="display:none">
+          <label>Extracapsular spread (ECS) *</label>
+          <div class="inline">
+            <label><input type="radio" name="ecs" value="Absent" checked /> Absent</label>
+            <label><input type="radio" name="ecs" value="Present" /> Present</label>
+          </div>
+        </div>
+        <div class="group" id="lnDetailGroup">
+          <label>Details of lymph node status</label>
+          <div id="lnDetailRoot"></div>
+          <button id="addLnDetail" class="btn" type="button" style="margin-top:8px">+ Add LN detail</button>
+          <div class="help">Examples: Pelvic lymph node, right (0/2); Pelvic lymph node, left (0/2).</div>
+        </div>
+
+        <h2 class="title">Additional Findings</h2>
+        <div class="group">
+          <label>Other findings</label>
+          <textarea id="otherFindings" placeholder="e.g., BPH, HGPIN, atrophy"></textarea>
+        </div>
+
+        <div class="btns">
+          <button class="btn primary" id="btnGenerate">Generate</button>
+          <button class="btn" id="btnCopy">Copy</button>
+          <button class="btn" id="btnClear">Clear</button>
+        </div>
+      </section>
+
+      <section class="preview">
+        <h2 class="title">Report Preview</h2>
+        <div id="report" class="report"><em class="help">Fill in the form to generate the report…</em></div>
+      </section>
+    </div>
+  </div>
+
+  <template id="cassRowTmpl">
+    <div class="row cass-row">
+      <input class="cass-code" type="text" placeholder="Code (e.g., AA)" />
+      <input class="cass-desc" type="text" placeholder="Description (e.g., apex, right)" />
+      <button class="btn rm cass-del" type="button">×</button>
+    </div>
+  </template>
+  <template id="lnDetailRowTmpl">
+    <div class="row3 ln-row">
+      <input class="ln-site" type="text" placeholder="LN site (e.g., Pelvic LN, right)" />
+      <input class="ln-pos" type="number" min="0" step="1" placeholder="Pos" />
+      <input class="ln-tot" type="number" min="0" step="1" placeholder="Total" />
+      <button class="btn rm ln-del" type="button">×</button>
+    </div>
+  </template>
+
+  <script>
+    (function(){
+      const $ = (s, el=document) => el.querySelector(s);
+      const qa = (s, el=document) => Array.from(el.querySelectorAll(s));
+
+      // Enable/disable optional inputs
+      $('#procedureOther').disabled = true; $('#histoOther').disabled = true;
+      $('#procedure').addEventListener('change', e => toggle($('#procedureOther'), e.target.value === 'other'));
+      $('#histoType').addEventListener('change', e => toggle($('#histoOther'), e.target.value === 'other'));
+
+      // Gleason custom
+      $('#gradeGroup').addEventListener('change', () => { $('#gleasonCustom').style.display = ($('#gradeGroup').value === 'custom') ? 'block' : 'none'; generate(); });
+      ['#primaryScore','#secondaryScore'].forEach(sel=> $(sel).addEventListener('input', ()=>{ calcGleason(); generate(); }));
+      function calcGleason(){ const p = parseInt($('#primaryScore').value)||0; const s = parseInt($('#secondaryScore').value)||0; $('#totalScore').value = (p && s) ? p+s : ''; }
+
+      // Volume details
+      $('#tumorVolume').addEventListener('change', ()=> { $('#volumeDetail').style.display = ($('#tumorVolume').value === 'More than 5%') ? 'block' : 'none'; generate(); });
+
+      // EPE & Margin conditionals
+      qa('input[name="epe"]').forEach(el=> el.addEventListener('change', e=>{ $('#epeSite').style.display = (e.target.value === 'Present') ? 'block':'none'; generate(); }));
+      qa('input[name="margins"]').forEach(el=> el.addEventListener('change', e=>{ $('#marginSite').style.display = (e.target.value === 'Involved') ? 'block':'none'; generate(); }));
+
+      // ECS visible only if positive nodes > 0
+      $('#lnPositive').addEventListener('input', ()=>{ $('#ecsGroup').style.display = (toInt($('#lnPositive').value) > 0) ? 'block' : 'none'; generate(); });
+
+      // Dynamic Cassette rows
+      function addCassRow(code='', desc=''){
+        const row = $('#cassRowTmpl').content.firstElementChild.cloneNode(true);
+        row.querySelector('.cass-code').value = code;
+        row.querySelector('.cass-desc').value = desc;
+        row.querySelector('.cass-del').addEventListener('click', ()=>{ row.remove(); generate(); });
+        qa('input', row).forEach(el=>{ el.addEventListener('input', generate); el.addEventListener('change', generate); });
+        $('#cassRoot').appendChild(row);
+      }
+      // Seed with common defaults
+      ['AA-AB: right seminal vesicle and vas deferens','AC-AD: left seminal vesicle and vas deferens','AE: apex, right','AF: apex, left','AG-AN: prostate, right lobe','AO-AZ: prostate, left lobe']
+        .forEach(s=>{ const [c,...d]=s.split(':'); addCassRow(c.trim(), d.join(':').trim()); });
+      $('#addCass').addEventListener('click', ()=>{ addCassRow(); generate(); });
+
+      // Dynamic LN detail rows
+      function addLnRow(site='', pos='', tot=''){
+        const row = $('#lnDetailRowTmpl').content.firstElementChild.cloneNode(true);
+        row.querySelector('.ln-site').value = site;
+        row.querySelector('.ln-pos').value = pos;
+        row.querySelector('.ln-tot').value = tot;
+        row.querySelector('.ln-del').addEventListener('click', ()=>{ row.remove(); generate(); });
+        qa('input', row).forEach(el=>{ el.addEventListener('input', generate); el.addEventListener('change', generate); });
+        $('#lnDetailRoot').appendChild(row);
+      }
+      // Seed two example sides
+      addLnRow('Pelvic lymph node, right','', '');
+      addLnRow('Pelvic lymph node, left','', '');
+      $('#addLnDetail').addEventListener('click', ()=>{ addLnRow(); generate(); });
+
+      // Buttons
+      $('#btnGenerate').addEventListener('click', (e)=>{ e.preventDefault(); generate(); });
+      $('#btnCopy').addEventListener('click', ()=> { const t = $('#report').textContent; if(!t.trim()) return; navigator.clipboard.writeText(t).then(()=> flash('#btnCopy','Copied!'), ()=>alert('Copy failed')); });
+      $('#btnClear').addEventListener('click', ()=>{ if(!confirm('Clear all fields?')) return; clearForm(); });
+
+      // Live-generate
+      qa('input, select, textarea').forEach(el => { el.addEventListener('input', generate); el.addEventListener('change', generate); });
+
+      function getTStage(){ const epe = val('epe'); const svi = val('svi'); if (svi==='Present') return 'pT3b'; if (epe==='Present') return 'pT3a'; if (epe==='Indeterminate') return 'pT3 (indeterminate due to capsular incision)'; return 'pT2'; }
+      function getNStage(){ const pos = toInt($('#lnPositive').value)||0; const tot = toInt($('#lnTotal').value); if (!isFinite(tot)) return 'Nx'; return (pos===0) ? 'N0' : 'N1'; }
+      function gleasonTextAndGroup(){ const gSel=$('#gradeGroup').value; if(gSel!=="custom" && gSel){ return { text: $('#gradeGroup').selectedOptions[0].textContent, group: gSel }; } const p=toInt($('#primaryScore').value), s=toInt($('#secondaryScore').value), t=toInt($('#totalScore').value); if(!isFinite(p)||!isFinite(s)||!isFinite(t)) return { text:'Custom Gleason score not specified', group:'' }; let gg=''; if (t===6 && p===3 && s===3) gg='1'; else if (t===7 && p===3 && s===4) gg='2'; else if (t===7 && p===4 && s===3) gg='3'; else if (t===8 && ((p===4&&s===4)||(p===3&&s===5)||(p===5&&s===3))) gg='4'; else if ((t===9||t===10) && ((p===4&&s===5)||(p===5&&s===4)||(p===5&&s===5))) gg='5'; return { text:`Primary score (${p}) + secondary score (${s}) = ${t}`, group: gg } }
+
+      function generate(){
+        const procedure = ($('#procedure').value==='other') ? ($('#procedureOther').value||'radical prostatectomy') : $('#procedure').value.toLowerCase();
+        const histo = ($('#histoType').value==='other') ? ($('#histoOther').value||'Other (specify)') : $('#histoType').value;
+        const tStage = getTStage(); const nStage = getNStage();
+
+        // LN text
+        const lnP = nz($('#lnPositive').value,'0'); const lnT = nz($('#lnTotal').value,'/'); const lnText = `${lnP}/${lnT}`;
+
+        let r = 'DIAGNOSIS:\n\n';
+        r += `${histo} (${tStage}), with lymph node status (${nStage}, ${lnText}), prostate gland, ${procedure}\n`;
+
+        // Gross
+        r += `\n\nGROSS DESCRIPTION: \n\n`;
+        const containers = $('#containerCount').value; if (containers){ const c = parseInt(containers,10); const noun = (Number.isFinite(c) && c===1) ? 'container' : 'containers'; r += `Specimens were submitted in ${containers} labeled ${noun}.\n\n`; }
+        r += `#1 [Prostate gland]\n\n`;
+        r += `The specimen consists of the prostate and the attached bilateral seminal vesicles and\nvas deferens. All were fixed in formalin.`;
+        const wt=$('#weight').value; if (wt){ r += ` Total weight is ${wt} gram`; }
+        r += ` and specimen sizes are as follows:\n`;
+        const pX=$('#prostateX').value,pY=$('#prostateY').value,pZ=$('#prostateZ').value; if(pX&&pY&&pZ) r += `\n- Prostate: ${pX} x ${pY} x ${pZ} cm`;
+        const rX=$('#rsvX').value,rY=$('#rsvY').value,rZ=$('#rsvZ').value; if(rX&&rY&&rZ) r += `\n- Right seminal vesicle: ${rX} x ${rY} x ${rZ} cm`;
+        const rL=$('#rvdLength').value,rD=$('#rvdDiameter').value; if(rL&&rD) r += `\n- Right vas deferens (length x diameter): ${rL} x ${rD} cm`;
+        const lX=$('#lsvX').value,lY=$('#lsvY').value,lZ=$('#lsvZ').value; if(lX&&lY&&lZ) r += `\n- Left seminal vesicle: ${lX} x ${lY} x ${lZ} cm`;
+        const lL=$('#lvdLength').value,lD=$('#lvdDiameter').value; if(lL&&lD) r += `\n- Left vas deferens (length x diameter): ${lL} x ${lD} cm`;
+
+        // Additional specimens
+        const s2p=$('#spec2Pieces').value, s2s=$('#spec2Size').value; if (s2p||s2s) r += `\n\n#2 [Preprostate fat (anterior margin)]: ${s2p||'--'} tissue pieces, measuring up to ${s2s||'-- x -- x -- cm'}.`;
+        const s3side=$('#spec3Side').value, s3p=$('#spec3Pieces').value, s3s=$('#spec3Size').value; if(s3side) r += `\n\n#3 [Pelvic LN, ${s3side}]: ${s3p||'--'} tissue pieces, measuring up to ${s3s||'-- x -- x -- cm'}.`;
+        const s4side=$('#spec4Side').value, s4p=$('#spec4Pieces').value, s4s=$('#spec4Size').value; if(s4side) r += `\n\n#4 [Pelvic LN, ${s4side}]: ${s4p||'--'} tissue pieces, measuring up to ${s4s||'-- x -- x -- cm'}.`;
+        const s5=$('#spec5').value; if(s5) r += `\n\n#5 [Other]: ${s5}`;
+
+        // Cassette labels
+        const cassRows = qa('#cassRoot .cass-row');
+        if (cassRows.length){
+          r += `\n\nEmbedded in toto and labeled as:`;
+          cassRows.forEach(row=>{ const c=(row.querySelector('.cass-code')||{}).value||''; const d=(row.querySelector('.cass-desc')||{}).value||''; if(c||d) r += `\n${c}: ${d}`; });
+        }
+
+        // MICROSCOPIC DESCRIPTION
+        r += `\n\n\nMICROSCOPIC DESCRIPTION:\n`;
+        const histoFinal = ($('#histoType').value==='other') ? ($('#histoOther').value||histo) : histo;
+        r += `\nA. Tumor histological type: ${histoFinal}`;
+        const g = gleasonTextAndGroup();
+        if (g.group || g.text){ const gg = g.group ? `Grade group (${g.group})` : 'Grade group ( )'; r += `\n\nB. Tumor histological grade: ${gg}\n   - Gleason score: ${g.text}`; }
+        r += `\n\nC. Tumor volume: ${$('#tumorVolume').value}`;
+        if ($('#tumorVolume').value==='More than 5%'){ const tv=$('#totalVolume').value, rl=$('#rightLobe').value, ll=$('#leftLobe').value; if(tv) r += ` (approximately ${tv}%)`; if(rl||ll) r += ` (Right lobe: ${rl||'--'}%; Left lobe: ${ll||'--'}%)`; }
+        r += `\n\nD. Lymphovascular invasion: ${val('lvi')}`;
+        const epe = val('epe'); r += `\n\nE. Extraprostatic extension: ${epe}`; if(epe==='Present'){ const site=$('#epeSiteText').value; if(site) r += ` (site: ${site})`; }
+        r += `\n\nF. Seminal Vesicle Invasion: ${val('svi')}`;
+        const margins = val('margins'); r += `\n\nG. Margins: ${margins}`; if(margins==='Involved'){ const ms=$('#marginSiteText').value; if(ms) r += ` by invasive carcinoma (site: ${ms})`; }
+
+        // LN section H
+        const pos = toInt($('#lnPositive').value)||0; const tot = $('#lnTotal').value||'?';
+        r += `\n\nH. Lymph node status:`;
+        if (!isNaN(pos) && (tot!=='')){
+          if (pos === 0){ r += `\n   - Negative for metastasis (N0, ${pos}/${tot})`; }
+          else { r += `\n   - Positive for metastasis (${getNStage()}, ${pos}/${tot})`; r += `\n   - Extracapsular spread (ECS): ${val('ecs')}`; }
+        } else {
+          r += `\n   - No lymph nodes submitted / Nx`;
+        }
+        // Details of LN status (always show if any row exists)
+        const lnRows = qa('#lnDetailRoot .ln-row');
+        if (lnRows.length){
+          const lines = [];
+          lnRows.forEach(row=>{
+            const s=(row.querySelector('.ln-site')||{}).value||''; const p=(row.querySelector('.ln-pos')||{}).value||''; const t=(row.querySelector('.ln-tot')||{}).value||'';
+            if (s || p || t) lines.push(`     - ${s || 'LN'} (${p||'0'}/${t||'0'})`);
+          });
+          if (lines.length){ r += `\n   - Details of lymph node status:` + "\n" + lines.join("\n"); }
+        }
+
+        // I. Staging
+        r += `\n\nI. Tumor staging (AJCC 8th edition): ${tStage}`;
+        const stageDescMap={ 'pT2':'Organ confined', 'pT3a':'Extraprostatic extension', 'pT3b':'Seminal vesicle invasion', 'pT3 (indeterminate due to capsular incision)':'Extraprostatic extension (indeterminate)' };
+        if(stageDescMap[tStage]) r += `\n   - ${tStage}: ${stageDescMap[tStage]}`;
+
+        // J. Other findings
+        const other = $('#otherFindings').value; r += `\n\nJ. Other findings: ${other ? other : 'None'}`;
+
+        $('#report').textContent = r;
+      }
+
+      function clearForm(){
+        qa('input[type=text], input[type=number], textarea').forEach(el=> el.value='');
+        qa('select').forEach(el=> el.selectedIndex=0);
+        qa('input[name=lvi][value=Absent]')[0].checked = true;
+        qa('input[name=epe][value=Absent]')[0].checked = true;
+        qa('input[name=svi][value=Absent]')[0].checked = true;
+        qa('input[name=margins][value=Free]')[0].checked = true;
+        $('#ecsGroup').style.display = 'none';
+        $('#epeSite').style.display = 'none';
+        $('#marginSite').style.display = 'none';
+        // Reset dynamic lists
+        $('#cassRoot').innerHTML = '';
+        ['AA-AB: right seminal vesicle and vas deferens','AC-AD: left seminal vesicle and vas deferens','AE: apex, right','AF: apex, left','AG-AN: prostate, right lobe','AO-AZ: prostate, left lobe']
+          .forEach(s=>{ const [c,...d]=s.split(':'); addCassRow(c.trim(), d.join(':').trim()); });
+        $('#lnDetailRoot').innerHTML = '';
+        addLnRow('Pelvic lymph node, right','', '');
+        addLnRow('Pelvic lymph node, left','', '');
+        $('#report').innerHTML = '<em class="help">Fill in the form to generate the report…</em>';
+      }
+
+      // Utils
+      function toInt(v){ const n=parseInt(v,10); return Number.isFinite(n)?n:NaN; }
+      function nz(v,p=''){ return (v!==undefined && v!==null && String(v).trim()!=='') ? v : p; }
+      function val(name){ const el = qa(`input[name="${name}"]:checked`)[0]; return el ? el.value : ''; }
+      function toggle(el,on){ el.disabled = !on; el.style.opacity = on? '1' : '.6'; if(!on) el.value=''; }
+      function flash(sel,txt){ const b=$(sel); const t=b.textContent; const bg=b.style.background; b.textContent=txt; b.style.background='#16a34a'; setTimeout(()=>{ b.textContent=t; b.style.background=bg; }, 1200); }
+
+      // Init
+      window.addEventListener('load', generate);
+    })();
+  </script>
+</body>
+</html>
